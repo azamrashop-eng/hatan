@@ -391,20 +391,35 @@ class HatanApp {
             const cloudBooklets = await HatanSupabase.fetchBooklets();
             
             if (cloudBooklets.length === 0) {
-                // First run, migrate default booklets to Supabase
-                console.log("Supabase database is empty. Uploading default booklets...");
-                for (const bk of DEFAULT_BOOKLETS) {
-                    await HatanSupabase.saveBooklet({
-                        title: bk.title,
-                        category: bk.category,
-                        size: bk.size,
-                        description: bk.description,
-                        url: `pdf/${bk.filename}`,
-                        is_external: false
+                if (this.currentUser) {
+                    // First run, migrate default booklets to Supabase
+                    console.log("Supabase database is empty. Uploading default booklets...");
+                    for (const bk of DEFAULT_BOOKLETS) {
+                        try {
+                            await HatanSupabase.saveBooklet({
+                                title: bk.title,
+                                category: bk.category,
+                                size: bk.size,
+                                description: bk.description,
+                                url: `pdf/${bk.filename}`,
+                                is_external: false
+                            });
+                        } catch (err) {
+                            console.error("Failed to migrate booklet:", bk.title, err);
+                        }
+                    }
+                    // Fetch again
+                    this.booklets = await HatanSupabase.fetchBooklets();
+                } else {
+                    // Show default booklets locally for guests if cloud database is empty
+                    const list = JSON.parse(JSON.stringify(DEFAULT_BOOKLETS));
+                    list.forEach(bk => {
+                        if (this.bookletOverrides[bk.id]) {
+                            bk.description = this.bookletOverrides[bk.id];
+                        }
                     });
+                    this.booklets = list;
                 }
-                // Fetch again
-                this.booklets = await HatanSupabase.fetchBooklets();
             } else {
                 this.booklets = cloudBooklets;
             }
