@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מדריך החתן המלא | פלטפורמה אינטראקטיבית להדרכת חתנים</title>
+    <meta name="description" content="הדרכה מקיפה, רגישה ומפורטת לחתן החרדי. לימוד עצמי של תקשורת זוגית, אנטומיה, הלכות טהרה, הכנה לליל הכלולות וחיי אישות.">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <!-- Header App Shell -->
+    <header>
+        <div class="logo-container">
+            <button class="hamburger-btn" id="hamburger-toggle" aria-label="תפריט ניווט">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="logo-icon">
+                <i class="fas fa-crown"></i>
+            </div>
+            <div>
+                <span class="logo-text">בנייך כשתילים</span>
+                <span class="logo-sub">מדריך החתן המלא והמפורט</span>
+            </div>
+        </div>
+        
+        <div class="header-controls">
+            <!-- Theme Selector -->
+            <div class="theme-selector">
+                <button class="theme-btn" data-theme="light" title="ערכת נושא בהירה">
+                    <i class="fas fa-sun"></i> <span>יום</span>
+                </button>
+                <button class="theme-btn" data-theme="dark" title="ערכת נושא כהה">
+                    <i class="fas fa-moon"></i> <span>לילה</span>
+                </button>
+                <button class="theme-btn" data-theme="warm" title="ערכת נושא חמימה (מומלץ)">
+                    <i class="fas fa-fire-alt"></i> <span>חמים</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <nav>
+                <span class="nav-section-title">ניווט ראשי</span>
+                <ul class="nav-list">
+                    <li>
+                        <button class="nav-item-btn active" data-section="section-dashboard" id="nav-btn-dashboard">
+                            <i class="fas fa-home"></i>
+                            <span>לוח בקרה ומפה</span>
+                        </button>
+                    </li>
+                    <li>
+                        <button class="nav-item-btn" data-section="section-lessons" id="nav-btn-lessons">
+                            <i class="fas fa-book-open"></i>
+                            <span>שיעורי ההדרכה</span>
+                        </button>
+                    </li>
+                    <li>
+                        <button class="nav-item-btn" data-section="section-calendar" id="nav-btn-calendar">
+                            <i class="fas fa-calendar-alt"></i>
+                            <span>יומן שבעה נקיים</span>
+                        </button>
+                    </li>
+                    <li>
+                        <button class="nav-item-btn" data-section="section-simulator" id="nav-btn-simulator">
+                            <i class="fas fa-comments-dollar" style="transform: scaleX(-1);"></i>
+                            <span>סימולטור דיאלוגים</span>
+                        </button>
+                    </li>
+                    <li>
+                        <button class="nav-item-btn" data-section="section-qa" id="nav-btn-qa">
+                            <i class="fas fa-hands-helping"></i>
+                            <span>שאל את הרב</span>
+                        </button>
+                    </li>
+                    <li>
+                        <button class="nav-item-btn" data-section="section-library" id="nav-btn-library">
+                            <i class="fas fa-file-pdf"></i>
+                            <span>ספריית מדריכים (PDF)</span>
+                        </button>
+                    </li>
+                </ul>
+
+                <span class="nav-section-title font-small">עזרים אישיים</span>
+                <ul class="nav-list">
+                    <li>
+                        <button class="nav-item-btn" data-section="section-checklists" id="nav-btn-checklists">
+                            <i class="fas fa-tasks"></i>
+                            <span>רשימות הכנה</span>
+                        </button>
+                    </li>
+                    <li>
+                        <button class="nav-item-btn" data-section="section-journal" id="nav-btn-journal">
+                            <i class="fas fa-pen-fancy"></i>
+                            <span>יומן אישי דיסקרטי</span>
+                        </button>
+                    </li>
+                    <li>
+                        <button class="nav-item-btn" data-section="section-admin" id="nav-btn-admin">
+                            <i class="fas fa-user-cog"></i>
+                            <span>ניהול מערכת (מנהל)</span>
+                        </button>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            
+            <!-- SECTION 1: DASHBOARD -->
+            <section id="section-dashboard" class="content-section active">
+                <div class="card welcome-card">
+                    <h1>שלום עליך, חתן יקר!</h1>
+                    <p>ברוך הבא למערכת הדרכת החתנים הדיגיטלית המקיפה שלך. כאן תלמד בצורה המפורטת ביותר, ללא עמימות, את כל מה שחתן צריך לדעת כדי להגיע לחתונה בביטחון, ללא פחדים, ולבנות קשר של אהבה וקדושה עם אשתו.</p>
+                    
+                    <h3 style="margin-top: 1.5rem;">התקדמות הלמידה שלך בקורס:</h3>
+                    <div class="progress-container">
+                        <div class="progress-bar" id="dash-progress-bar"></div>
+                        <div class="progress-text" id="dash-progress-text">0% מהקורס הושלם</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>מפת הדרכים הזוגית שלך</h2>
+                    <p>תרשים שלבי הקורס והלמידה. לחץ על כל שלב כדי לעבור ישירות לשיעור המתאים:</p>
+                    
+                    <div class="roadmap-container">
+                        <div class="roadmap-step" onclick="app.currentLessonId = 1; app.renderLesson(1); document.getElementById('nav-btn-lessons').click();">
+                            <div class="step-marker">א</div>
+                            <div class="step-content">
+                                <div class="step-title">שיעור 1: מעבר לחיי נישואין ותקשורת זוגית</div>
+                                <div class="step-desc">ההבדלים הרגשיים בין גבר לאישה, הקשבה פעילה ומחמאות.</div>
+                            </div>
+                        </div>
+
+                        <div class="roadmap-step" onclick="app.currentLessonId = 2; app.renderLesson(2); document.getElementById('nav-btn-lessons').click();">
+                            <div class="step-marker">ב</div>
+                            <div class="step-content">
+                                <div class="step-title">שיעור 2: היכרות עם הגוף והאנטומיה</div>
+                                <div class="step-desc">איברי המין הגבריים והנקביים, קרום הבתולים, ורטיבות טבעית.</div>
+                            </div>
+                        </div>
+
+                        <div class="roadmap-step" onclick="app.currentLessonId = 3; app.renderLesson(3); document.getElementById('nav-btn-lessons').click();">
+                            <div class="step-marker">ג</div>
+                            <div class="step-content">
+                                <div class="step-title">שיעור 3: הלכות טהרת המשפחה הלכה למעשה</div>
+                                <div class="step-desc">הרחקות הנידה, הפסק טהרה, שבעה נקיים וטבילה במקווה.</div>
+                            </div>
+                        </div>
+
+                        <div class="roadmap-step" onclick="app.currentLessonId = 4; app.renderLesson(4); document.getElementById('nav-btn-lessons').click();">
+                            <div class="step-marker">ד</div>
+                            <div class="step-content">
+                                <div class="step-title">שיעור 4: ההכנה המעשית לליל הכלולות</div>
+                                <div class="step-desc">הפגת מתחים, יצירת אווירה נעימה ומגע ראשוני הדרגתי.</div>
+                            </div>
+                        </div>
+
+                        <div class="roadmap-step" onclick="app.currentLessonId = 5; app.renderLesson(5); document.getElementById('nav-btn-lessons').click();">
+                            <div class="step-marker">ה</div>
+                            <div class="step-content">
+                                <div class="step-title">שיעור 5: ליל הכלולות - החיבור הפיזי הראשון</div>
+                                <div class="step-desc">החדירה הראשונה (שלב אחר שלב), שימוש בכרית ובסיכוך, ודם בתולים.</div>
+                            </div>
+                        </div>
+
+                        <div class="roadmap-step" onclick="app.currentLessonId = 6; app.renderLesson(6); document.getElementById('nav-btn-lessons').click();">
+                            <div class="step-marker">ו</div>
+                            <div class="step-content">
+                                <div class="step-title">שיעור 6: בניית חיי אישות שמחים לאורך זמן</div>
+                                <div class="step-desc">מצוות עונה, חשיבות סיפוק האישה, וטכניקות תנועה וחדירה מיוחדות.</div>
+                            </div>
+                        </div>
+
+                        <div class="roadmap-step" onclick="app.currentLessonId = 7; app.renderLesson(7); document.getElementById('nav-btn-lessons').click();">
+                            <div class="step-marker">ז</div>
+                            <div class="step-content">
+                                <div class="step-title">שיעור 7: חיזוק שרירי המין ושליטה בשפיכה לגברים</div>
+                                <div class="step-desc">שריר ה-PC, תרגילי קיגל יומיומיים דיסקרטיים, תזונה ותוספים לאנרגיה.</div>
+                            </div>
+                        </div>
+
+                        <div class="roadmap-step" onclick="app.currentLessonId = 8; app.renderLesson(8); document.getElementById('nav-btn-lessons').click();">
+                            <div class="step-marker">ח</div>
+                            <div class="step-content">
+                                <div class="step-title">שיעור 8: טכניקות מגע מתקדמות ומחזוריות עוררות לכלה</div>
+                                <div class="step-desc">מגע רציף, מעבר מהקצוות למרכז, מתיחת רקמות עדינה ושיטת חימום/קירור.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-grid">
+                    <div class="dash-box">
+                        <h3><i class="fas fa-lock" style="color: var(--primary);"></i> פרטיות מוחלטת</h3>
+                        <p style="font-size: 0.95rem; margin-top: 5px;">כל המידע שלך נשמר באופן מקומי על דפדפן זה בלבד. אף נתון לא מועבר לאינטרנט או נשמר בשרת כלשהו.</p>
+                    </div>
+                    <div class="dash-box">
+                        <h3><i class="fas fa-question-circle" style="color: var(--primary);"></i> שאלות בנושאי רפואה</h3>
+                        <p style="font-size: 0.95rem; margin-top: 5px;">בכל מקרה של קושי פיזיולוגי או כאב בלתי רגיל, פנו לרופא נשים המבין את המגזר הדתי או ליועצי אישות מוסמכים.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 2: LESSONS READER -->
+            <section id="section-lessons" class="content-section">
+                <div class="lesson-layout">
+                    <!-- Lesson Body -->
+                    <div class="card lesson-content-card" id="lesson-viewer-card">
+                        <h1 id="lesson-title">טוען שיעור...</h1>
+                        <div class="lesson-body" id="lesson-body-content">
+                            <!-- Text will be rendered by JS -->
+                        </div>
+
+                        <!-- Quiz Section -->
+                        <div class="quiz-box" id="lesson-quiz-box">
+                            <!-- Quiz will be rendered here -->
+                        </div>
+
+                        <div class="lesson-navigation-btns">
+                            <button class="btn btn-secondary" id="btn-prev-lesson">
+                                <i class="fas fa-arrow-right"></i> שיעור קודם
+                            </button>
+                            <button class="btn" id="btn-next-lesson">
+                                שיעור הבא <i class="fas fa-arrow-left"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Lesson Index (Chapter Sidebar) -->
+                    <div class="lesson-index-card">
+                        <h3>פרקי הקורס</h3>
+                        <div class="chapter-list" id="lesson-index-list">
+                            <!-- Rendered by JS -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 3: CALENDAR TRACKER -->
+            <section id="section-calendar" class="content-section">
+                <div class="card">
+                    <h1>יומן שבעה נקיים חכם</h1>
+                    <p>בממשק זה תוכל להזין את תאריך שעת 'הפסק הטהרה' של אשתך, והלוח יחשב עבורך אוטומטית את ימי השבעה נקיים, יפרט את בדיקות היום הנדרשות, ויסמן את ליל המקווה.</p>
+                </div>
+
+                <div class="calendar-layout">
+                    <!-- Control Form -->
+                    <div class="calendar-control-panel">
+                        <h3>הזנת נתוני מחזור</h3>
+                        <div style="margin-top: 15px;">
+                            <div class="form-group">
+                                <label for="hefsek-date-input">תאריך בדיקת הפסק הטהרה:</label>
+                                <input type="date" id="hefsek-date-input" class="form-input">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="hefsek-time-select">זמן ביצוע הבדיקה:</label>
+                                <select id="hefsek-time-select" class="form-input">
+                                    <option value="before">לפני שקיעת החמה (מומלץ וכשר לאותו יום)</option>
+                                    <option value="after">אחרי שקיעת החמה (נחשב כיום המחרת)</option>
+                                </select>
+                            </div>
+
+                            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                                <button class="btn" id="btn-save-hefsek" style="flex: 1;"><i class="fas fa-calculator"></i> חשב לוח</button>
+                                <button class="btn btn-secondary" id="btn-clear-hefsek"><i class="fas fa-trash-alt"></i> איפוס</button>
+                            </div>
+                        </div>
+                        
+                        <!-- Mini Instructions Box -->
+                        <div class="calendar-instructions" id="calendar-instructions-box">
+                            <!-- Populated on cell click -->
+                        </div>
+                    </div>
+
+                    <!-- Calendar Grid -->
+                    <div class="card calendar-grid-card">
+                        <div id="calendar-grid-container">
+                            <!-- Rendered dynamically by calendar.js -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 4: DIALOGUE SIMULATOR -->
+            <section id="section-simulator" class="content-section">
+                <div class="card">
+                    <h1>סימולטור תקשורת זוגית</h1>
+                    <p>לפניך סימולטור אינטראקטיבי המציג דיאלוגים מורכבים מחיי הנישואין. בחר את התשובה הנכונה ביותר כבעל כדי לחזק את הקשר הרגשי עם אשתך ולהבטיח שלום בית.</p>
+                </div>
+
+                <div class="card" style="max-width: 800px; margin: 0 auto;">
+                    <div class="chat-box" id="sim-chat-box">
+                        <!-- Messages go here -->
+                    </div>
+                    <div class="chat-options-panel" id="sim-options-panel">
+                        <!-- Choices go here -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 5: ASK THE RABBI -->
+            <section id="section-qa" class="content-section">
+                <div class="card">
+                    <h1>שאל את הרב - מאגר שאלות ותשובות</h1>
+                    <p>לפניך מנגנון חיפוש למענה על שאלות נפוצות בנושאי הלכה, אינטימיות ויחסים, וכן אפשרות לניסוח שאלה אישית לקבלת מענה סימולטיבי מיידי.</p>
+                </div>
+
+                <div class="lesson-layout">
+                    <!-- Custom QA Chat -->
+                    <div class="card">
+                        <h2>שאל שאלה אישית אנונימית</h2>
+                        <p style="font-size: 0.95rem;">הקלד כל שאלה או חשש שיש לך (למשל: 'מה עושים אם כואב לה?', 'איך להשתמש בחומר סיכוך?') וקבל מענה הלכתי/מעשי מעודד:</p>
+                        
+                        <div class="search-wrapper" style="margin-top: 15px;">
+                            <input type="text" id="custom-qa-input" class="search-input" placeholder="הקלד כאן את שאלתך (למשל: מה לעשות אם יש כאב בלילה הראשון?)...">
+                            <button class="btn" id="btn-send-custom-qa"><i class="fas fa-paper-plane"></i> שלח</button>
+                        </div>
+
+                        <div id="custom-qa-output" style="max-height: 250px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding: 10px; background: var(--bg-main); border-radius: 8px;">
+                            <!-- QA responses will render here -->
+                        </div>
+                    </div>
+
+                    <!-- FAQ List -->
+                    <div class="card" style="position: sticky; top: calc(var(--header-height) + 2rem);">
+                        <h2>שאלות ותשובות נפוצות</h2>
+                        <div class="search-wrapper" style="margin-top: 15px;">
+                            <input type="text" id="faq-search" class="search-input" placeholder="חיפוש במאגר השאלות...">
+                        </div>
+                        <div class="faq-list" id="faq-list-container">
+                            <!-- Rendered dynamically by simulator.js -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 6: CHECKLISTS -->
+            <section id="section-checklists" class="content-section">
+                <div class="card">
+                    <h1>רשימות הכנה שימושיות</h1>
+                    <p>רשימות משימות ופריטים שיעזרו לך להתארגן לקראת החתונה, ליל הכלולות וההתנהלות ההלכתית בבית.</p>
+                </div>
+
+                <div class="dashboard-grid">
+                    <div class="card">
+                        <h2><i class="fas fa-suitcase" style="color: var(--primary); margin-left: 8px;"></i> ציוד לתיק ליל הכלולות</h2>
+                        <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1rem;">פריטים שחשוב מאוד שיהיו אצלך בתיק האישי במלון בערב החתונה:</p>
+                        <div class="checklist-container" id="wedding-checklist-container">
+                            <!-- Rendered by JS -->
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h2><i class="fas fa-book" style="color: var(--primary); margin-left: 8px;"></i> היערכות הלכתית בבית</h2>
+                        <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1rem;">דברים שחשוב לרכוש ולהכין בבית לקראת הלכות הטהרה:</p>
+                        <div class="checklist-container" id="halacha-checklist-container">
+                            <!-- Rendered by JS -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 7: PRIVATE JOURNAL -->
+            <section id="section-journal" class="content-section">
+                <div class="card">
+                    <h1>יומן אישי דיסקרטי ומאובטח</h1>
+                    <p>מקום פרטי לחלוטין לכתוב בו שאלות שתרצה לשאול את מדריך החתנים או הרב שלך, מחשבות אישיות וחששות. כל מה שייכתב כאן נשמר במחשב שלך בלבד ולא יישלח לאף גורם.</p>
+                </div>
+
+                <div class="card">
+                    <textarea id="journal-textarea" class="notes-textarea" placeholder="כתוב כאן את מחשבותיך, שאלות שתרצה לברר עם הרב, או נקודות לזכור..."></textarea>
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <button class="btn" id="btn-save-journal"><i class="fas fa-save"></i> שמור ביומן</button>
+                        <span id="journal-save-status" style="color: var(--success); font-weight: 700; display: none;">
+                            <i class="fas fa-check"></i> נשמר בהצלחה במחשב!
+                        </span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 8: DIGITAL PDF LIBRARY -->
+            <section id="section-library" class="content-section">
+                <div class="card">
+                    <h1>ספריית מדריכים דיגיטלית (PDF)</h1>
+                    <p>כאן ריכזנו עבורך את כל קבצי ההדרכה, הספרים והמצגות המקצועיות שהועלו למערכת. כל הקבצים שמורים באופן מקומי בתיקיית `pdf` של הפרויקט. לחיצה על כפתור הפתיחה תפתח את המדריך בלשונית חדשה בדפדפן לקריאה נוחה ומהירה.</p>
+                </div>
+
+                <h2 style="margin-top: 2rem; border-bottom: 2px solid var(--primary); padding-bottom: 10px; margin-bottom: 1.5rem;">
+                    <i class="fas fa-gavel" style="color: var(--primary);"></i> מדריכי הבית היהודי, הלכה ורגש (עברית)
+                </h2>
+                <div id="library-hebrew-container" style="display: grid; grid-template-columns: 1fr; gap: 1.5rem; margin-bottom: 2.5rem;">
+                    <!-- Dynamically rendered -->
+                </div>
+
+                <h2 style="margin-top: 2rem; border-bottom: 2px solid var(--primary); padding-bottom: 10px; margin-bottom: 1.5rem;">
+                    <i class="fas fa-dumbbell" style="color: var(--primary);"></i> מדריכי סיבולת, כושר פיזיולוגי וטכניקות מגע (עברית/אנגלית)
+                </h2>
+                <div id="library-technical-container" style="display: grid; grid-template-columns: 1fr; gap: 1.5rem;">
+                    <!-- Dynamically rendered -->
+                </div>
+            </section>
+
+            <!-- SECTION 9: ADMIN PANEL -->
+            <section id="section-admin" class="content-section">
+                <!-- Locked View -->
+                <div id="admin-locked-view" class="card" style="max-width: 500px; margin: 2rem auto; text-align: center;">
+                    <h2><i class="fas fa-user-shield" style="color: var(--primary); font-size: 2.5rem; margin-bottom: 1rem; display: block;"></i> גישת מנהל מערכת</h2>
+                    <p style="margin-bottom: 1.5rem;">סקשן זה מיועד למדריכי חתנים ומנהלי המערכת בלבד. אנא הזן את קוד הגישה כדי להמשיך:</p>
+                    
+                    <div class="form-group" style="max-width: 250px; margin: 0 auto 1.5rem auto;">
+                        <input type="password" id="admin-passcode-input" class="form-input" placeholder="הזן קוד גישה (1234)..." style="text-align: center; letter-spacing: 5px; font-size: 1.2rem;">
+                    </div>
+                    <button class="btn" id="btn-admin-unlock"><i class="fas fa-lock-open"></i> כניסה לפאנל</button>
+                    <p id="admin-lock-error" style="color: var(--error); font-weight: 700; margin-top: 10px; display: none;">קוד גישה שגוי! נסה שוב.</p>
+                </div>
+
+                <!-- Unlocked View -->
+                <div id="admin-unlocked-view" style="display: none;">
+                    <div class="card" style="background: linear-gradient(135deg, var(--bg-card) 60%, rgba(197, 168, 128, 0.05) 100%);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+                            <h1 style="margin-bottom: 0; font-size: 1.8rem;">פאנל מנהל מערכת - הדרכת חתנים</h1>
+                            <button class="btn btn-secondary" id="btn-admin-lock-back"><i class="fas fa-lock"></i> נעילת פאנל</button>
+                        </div>
+                        <p style="margin-top: 10px; margin-bottom: 0;">שלום מנהל המערכת. כאן באפשרותך להעלות חוברות וספרים חדשים, לערוך את תיאורי ההסבר של המדריכים הקיימים, או למחוק חוברות שהוספת ידנית.</p>
+                    </div>
+
+                    <!-- Add New Booklet Form -->
+                    <div class="card">
+                        <h2><i class="fas fa-file-upload" style="color: var(--primary);"></i> העלאת חוברת / מדריך חדש</h2>
+                        <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1.5rem;">הנחיה חשובה: לפני מילוי הטופס, העתק את קובץ ה-PDF לתיקיית <strong>pdf</strong> בפרויקט (`hatan-guide/pdf`). לאחר מכן, רשום כאן את שם הקובץ המדויק.</p>
+                        
+                        <div class="dashboard-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label for="admin-booklet-title">שם תצוגה של החוברת:</label>
+                                <input type="text" id="admin-booklet-title" class="form-input" placeholder="למשל: יסודות שלום הבית החסידי.pdf">
+                            </div>
+                            
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label for="admin-booklet-filename">שם הקובץ המדויק (כולל .pdf):</label>
+                                <input type="text" id="admin-booklet-filename" class="form-input" placeholder="למשל: shalom_bayit_guide.pdf">
+                            </div>
+
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label for="admin-booklet-category">קטגוריית מדריך:</label>
+                                <select id="admin-booklet-category" class="form-input">
+                                    <option value="jewish_purity">מדריכי הבית היהודי, הלכה ורגש</option>
+                                    <option value="stamina_techniques">מדריכי סיבולת וטכניקות מגע</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label for="admin-booklet-size">גודל הקובץ (במגה-בייט):</label>
+                                <input type="text" id="admin-booklet-size" class="form-input" placeholder="למשל: 4.5 MB">
+                            </div>
+                        </div>
+
+                        <div class="form-group" style="margin-top: 1rem;">
+                            <label for="admin-booklet-description">תיאור והסבר מפורט על החוברת והתוכן שלה:</label>
+                            <textarea id="admin-booklet-description" class="form-input" style="height: 120px; font-size: 0.95rem;" placeholder="כתוב כאן תיאור מפורט שיוצג לחתן שיסביר מה מופיע בחוברת הזו ומה החשיבות שלה..."></textarea>
+                        </div>
+
+                        <button class="btn" id="btn-admin-add-booklet" style="margin-top: 1rem;"><i class="fas fa-plus"></i> הוסף חוברת לספרייה</button>
+                    </div>
+
+                    <!-- Manage and Edit Booklets -->
+                    <div class="card">
+                        <h2><i class="fas fa-edit" style="color: var(--primary);"></i> עריכה וניהול של חוברות קיימות</h2>
+                        <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1rem;">לפניך רשימת כל החוברות במערכת. תוכל לערוך את תיאור ההסבר של הכל (השינוי יישמר במחשב זה), או למחוק חוברות שהוספת ידנית.</p>
+                        
+                        <div id="admin-booklets-list" style="display: flex; flex-direction: column; gap: 1rem; margin-top: 1.5rem;">
+                            <!-- Dynamically loaded list of booklets with edit/delete inputs -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- JS Files -->
+    <script src="js/lessons.js"></script>
+    <script src="js/booklets.js"></script>
+    <script src="js/calendar.js"></script>
+    <script src="js/simulator.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
