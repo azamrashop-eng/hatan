@@ -412,16 +412,42 @@
 
             <!-- SECTION 9: ADMIN PANEL -->
             <section id="section-admin" class="content-section">
-                <!-- Locked View -->
+                <!-- Warning Banner if Supabase not configured -->
+                <div id="admin-supabase-warning" class="card" style="border: 2px solid var(--warning); background-color: rgba(239, 108, 0, 0.05); display: none;">
+                    <h3><i class="fas fa-exclamation-triangle" style="color: var(--warning);"></i> מצב ענן לא מופעל</h3>
+                    <p style="font-size: 0.95rem; margin-bottom: 0;">הפרויקט אינו מחובר לשרת ענן (Supabase). כרגע פאנל הניהול פועל במצב מקומי באמצעות קוד גישה <strong>1234</strong>. כדי להפעיל הרשמה, התחברות אישית, העלאת קבצים אמיתיים ומשובים, יש להגדיר את מפתחות ה-API בקובץ [supabase-config.js](file:///C:/Users/212/.gemini/antigravity/scratch/hatan-guide/js/supabase-config.js).</p>
+                </div>
+
+                <!-- Passcode Locked View (for Local Mode fallback) -->
                 <div id="admin-locked-view" class="card" style="max-width: 500px; margin: 2rem auto; text-align: center;">
-                    <h2><i class="fas fa-user-shield" style="color: var(--primary); font-size: 2.5rem; margin-bottom: 1rem; display: block;"></i> גישת מנהל מערכת</h2>
-                    <p style="margin-bottom: 1.5rem;">סקשן זה מיועד למדריכי חתנים ומנהלי המערכת בלבד. אנא הזן את קוד הגישה כדי להמשיך:</p>
-                    
+                    <h2><i class="fas fa-user-shield" style="color: var(--primary); font-size: 2.5rem; margin-bottom: 1rem; display: block;"></i> גישת מנהל (מצב מקומי)</h2>
+                    <p style="margin-bottom: 1.5rem;">הזן את קוד הגישה (ברירת מחדל: 1234) כדי להמשיך לניהול המקומי:</p>
                     <div class="form-group" style="max-width: 250px; margin: 0 auto 1.5rem auto;">
-                        <input type="password" id="admin-passcode-input" class="form-input" placeholder="הזן קוד גישה (1234)..." style="text-align: center; letter-spacing: 5px; font-size: 1.2rem;">
+                        <input type="password" id="admin-passcode-input" class="form-input" placeholder="הזן קוד..." style="text-align: center; letter-spacing: 5px; font-size: 1.2rem;">
                     </div>
                     <button class="btn" id="btn-admin-unlock"><i class="fas fa-lock-open"></i> כניסה לפאנל</button>
-                    <p id="admin-lock-error" style="color: var(--error); font-weight: 700; margin-top: 10px; display: none;">קוד גישה שגוי! נסה שוב.</p>
+                    <p id="admin-lock-error" style="color: var(--error); font-weight: 700; margin-top: 10px; display: none;">קוד גישה שגוי!</p>
+                </div>
+
+                <!-- Supabase Auth Locked View (for Cloud Mode) -->
+                <div id="admin-supabase-locked-view" class="card" style="max-width: 500px; margin: 2rem auto; display: none;">
+                    <h2 style="text-align: center;"><i class="fas fa-cloud" style="color: var(--primary); font-size: 2.5rem; margin-bottom: 1rem; display: block;"></i> כניסת מדריכים (מצב ענן)</h2>
+                    <p style="text-align: center; margin-bottom: 1.5rem; font-size: 0.95rem;">התחבר עם המשתמש האישי שלך או הירשם כמדריך חדש במערכת:</p>
+                    
+                    <div class="form-group">
+                        <label for="admin-email-input">כתובת אימייל:</label>
+                        <input type="email" id="admin-email-input" class="form-input" placeholder="example@domain.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="admin-password-input">סיסמה:</label>
+                        <input type="password" id="admin-password-input" class="form-input" placeholder="לפחות 6 תווים...">
+                    </div>
+                    
+                    <div style="display: flex; gap: 10px; margin-top: 1.5rem;">
+                        <button class="btn" id="btn-admin-login" style="flex: 1;"><i class="fas fa-sign-in-alt"></i> התחברות</button>
+                        <button class="btn btn-secondary" id="btn-admin-register" style="flex: 1;"><i class="fas fa-user-plus"></i> הרשמה כמדריך</button>
+                    </div>
+                    <p id="admin-supabase-error" style="color: var(--error); font-weight: 700; margin-top: 15px; text-align: center; display: none;"></p>
                 </div>
 
                 <!-- Unlocked View -->
@@ -429,27 +455,21 @@
                     <div class="card" style="background: linear-gradient(135deg, var(--bg-card) 60%, rgba(197, 168, 128, 0.05) 100%);">
                         <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
                             <h1 style="margin-bottom: 0; font-size: 1.8rem;">פאנל מנהל מערכת - הדרכת חתנים</h1>
-                            <button class="btn btn-secondary" id="btn-admin-lock-back"><i class="fas fa-lock"></i> נעילת פאנל</button>
+                            <button class="btn btn-secondary" id="btn-admin-lock-back"><i class="fas fa-sign-out-alt"></i> התנתקות / יציאה</button>
                         </div>
-                        <p style="margin-top: 10px; margin-bottom: 0;">שלום מנהל המערכת. כאן באפשרותך להעלות חוברות וספרים חדשים, לערוך את תיאורי ההסבר של המדריכים הקיימים, או למחוק חוברות שהוספת ידנית.</p>
+                        <p style="margin-top: 10px; margin-bottom: 0;">שלום מנהל המערכת. כאן באפשרותך להעלות חוברות וספרים חדשים (לקבצי PDF בענן או לקישורים חיצוניים), לערוך את תיאורי המדריכים ולצפות במשובים.</p>
                     </div>
 
                     <!-- Add New Booklet Form -->
                     <div class="card">
                         <h2><i class="fas fa-file-upload" style="color: var(--primary);"></i> העלאת חוברת / מדריך חדש</h2>
-                        <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1.5rem;">הנחיה חשובה: לפני מילוי הטופס, העתק את קובץ ה-PDF לתיקיית <strong>pdf</strong> בפרויקט (`hatan-guide/pdf`). לאחר מכן, רשום כאן את שם הקובץ המדויק.</p>
                         
                         <div class="dashboard-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
                             <div class="form-group" style="margin-bottom: 0;">
                                 <label for="admin-booklet-title">שם תצוגה של החוברת:</label>
-                                <input type="text" id="admin-booklet-title" class="form-input" placeholder="למשל: יסודות שלום הבית החסידי.pdf">
+                                <input type="text" id="admin-booklet-title" class="form-input" placeholder="למשל: יסודות שלום הבית החסידי">
                             </div>
                             
-                            <div class="form-group" style="margin-bottom: 0;">
-                                <label for="admin-booklet-filename">שם הקובץ המדויק (כולל .pdf):</label>
-                                <input type="text" id="admin-booklet-filename" class="form-input" placeholder="למשל: shalom_bayit_guide.pdf">
-                            </div>
-
                             <div class="form-group" style="margin-bottom: 0;">
                                 <label for="admin-booklet-category">קטגוריית מדריך:</label>
                                 <select id="admin-booklet-category" class="form-input">
@@ -464,18 +484,55 @@
                             </div>
                         </div>
 
-                        <div class="form-group" style="margin-top: 1rem;">
-                            <label for="admin-booklet-description">תיאור והסבר מפורט על החוברת והתוכן שלה:</label>
-                            <textarea id="admin-booklet-description" class="form-input" style="height: 120px; font-size: 0.95rem;" placeholder="כתוב כאן תיאור מפורט שיוצג לחתן שיסביר מה מופיע בחוברת הזו ומה החשיבות שלה..."></textarea>
+                        <!-- File upload toggle / choices -->
+                        <div class="dashboard-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label>שיטת העלאת התוכן:</label>
+                                <div style="display: flex; gap: 10px; margin-top: 5px;">
+                                    <button type="button" class="btn btn-secondary active" id="btn-toggle-upload-file" style="flex: 1; font-size: 0.85rem; padding: 6px 10px;">העלאת קובץ PDF</button>
+                                    <button type="button" class="btn btn-secondary" id="btn-toggle-upload-link" style="flex: 1; font-size: 0.85rem; padding: 6px 10px;">קישור חיצוני (Drive/etc)</button>
+                                </div>
+                            </div>
+
+                            <!-- File input -->
+                            <div class="form-group" id="group-file-upload" style="margin-bottom: 0;">
+                                <label for="admin-booklet-file">בחר קובץ PDF להעלאה:</label>
+                                <input type="file" id="admin-booklet-file" class="form-input" accept=".pdf">
+                                <!-- Local mode fallback input (hidden by default unless local mode) -->
+                                <input type="text" id="admin-booklet-filename" class="form-input" placeholder="שם הקובץ המקומי (למשל shalom.pdf)" style="display: none; margin-top: 5px;">
+                            </div>
+
+                            <!-- Link input -->
+                            <div class="form-group" id="group-link-input" style="display: none; margin-bottom: 0;">
+                                <label for="admin-booklet-url">כתובת קישור חיצוני (URL):</label>
+                                <input type="text" id="admin-booklet-url" class="form-input" placeholder="למשל: https://drive.google.com/...">
+                            </div>
                         </div>
 
-                        <button class="btn" id="btn-admin-add-booklet" style="margin-top: 1rem;"><i class="fas fa-plus"></i> הוסף חוברת לספרייה</button>
+                        <div class="form-group" style="margin-top: 1rem;">
+                            <label for="admin-booklet-description">תיאור והסבר מפורט על החוברת והתוכן שלה:</label>
+                            <textarea id="admin-booklet-description" class="form-input" style="height: 120px; font-size: 0.95rem;" placeholder="כתוב כאן תיאור מפורט שיוצג לחתן שיסביר מה מופיע בחוברת הזו..."></textarea>
+                        </div>
+
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <button class="btn" id="btn-admin-add-booklet"><i class="fas fa-plus"></i> הוסף חוברת לספרייה</button>
+                            <span id="admin-upload-spinner" style="display: none; font-weight: 700; color: var(--primary);"><i class="fas fa-spinner fa-spin"></i> מעלה קובץ לענן, אנא המתן...</span>
+                        </div>
+                    </div>
+
+                    <!-- Booklet Feedback Card (Admin only) -->
+                    <div class="card" id="admin-feedback-card" style="display: none;">
+                        <h2><i class="fas fa-comments" style="color: var(--primary);"></i> משובים והערות שהתקבלו מחתנים</h2>
+                        <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1rem;">הודעות והערות שחתנים שלחו על גבי החוברות השונות בספרייה.</p>
+                        <div id="admin-feedback-list" style="display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem;">
+                            <!-- Populated by JS -->
+                        </div>
                     </div>
 
                     <!-- Manage and Edit Booklets -->
                     <div class="card">
                         <h2><i class="fas fa-edit" style="color: var(--primary);"></i> עריכה וניהול של חוברות קיימות</h2>
-                        <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1rem;">לפניך רשימת כל החוברות במערכת. תוכל לערוך את תיאור ההסבר של הכל (השינוי יישמר במחשב זה), או למחוק חוברות שהוספת ידנית.</p>
+                        <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1rem;">לפניך רשימת כל החוברות במערכת. באפשרותך לערוך את תיאורי החוברות או למחוק חוברות שהוספת ידנית.</p>
                         
                         <div id="admin-booklets-list" style="display: flex; flex-direction: column; gap: 1rem; margin-top: 1.5rem;">
                             <!-- Dynamically loaded list of booklets with edit/delete inputs -->
@@ -487,7 +544,34 @@
         </main>
     </div>
 
+    <!-- Feedback Modal -->
+    <div id="feedback-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close-modal-btn" id="btn-close-feedback-modal">&times;</span>
+            <h2><i class="fas fa-comment-dots" style="color: var(--primary); margin-left: 8px;"></i> שליחת משוב על החוברת</h2>
+            <p id="feedback-modal-booklet-title" style="font-weight: 700; color: var(--primary-dark); margin-bottom: 1.5rem; font-size: 1.1rem;"></p>
+            
+            <input type="hidden" id="feedback-modal-booklet-id">
+            
+            <div class="form-group">
+                <label for="feedback-groom-name">השם שלך (אופציונלי - לשליחה אנונימית השאר ריק):</label>
+                <input type="text" id="feedback-groom-name" class="form-input" placeholder="למשל: משה (או השאר ריק לאנונימי)...">
+            </div>
+            
+            <div class="form-group">
+                <label for="feedback-groom-comment">ההערה או המשוב שלך למדריך החתנים:</label>
+                <textarea id="feedback-groom-comment" class="form-input" style="height: 120px; font-size: 0.95rem;" placeholder="רשום כאן את הערתך, שאלה שיש לך על תוכן החוברת, או כל משוב אחר..."></textarea>
+            </div>
+            
+            <div style="text-align: left; margin-top: 1.5rem;">
+                <button class="btn" id="btn-submit-feedback"><i class="fas fa-paper-plane"></i> שלח משוב לענן</button>
+            </div>
+        </div>
+    </div>
+
     <!-- JS Files -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
     <script src="js/lessons.js"></script>
     <script src="js/booklets.js"></script>
     <script src="js/calendar.js"></script>

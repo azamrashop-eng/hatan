@@ -14,10 +14,16 @@ class HatanApp {
         this.booklets = [];
         this.customBooklets = this.loadCustomBooklets();
         this.bookletOverrides = this.loadBookletOverrides();
+        
+        // Supabase Hybrid Mode
+        this.isCloudMode = window.HatanSupabase && window.HatanSupabase.isConfigured();
+        this.currentUser = null;
+        this.uploadType = "file"; // "file" or "link"
+
         this.refreshBookletsList();
     }
 
-    init() {
+    async init() {
         // Initialize Navigation
         this.initNavigation();
         
@@ -42,6 +48,14 @@ class HatanApp {
 
         // Initialize Journal
         this.initJournal();
+
+        // Initialize Cloud Data if applicable
+        if (this.isCloudMode) {
+            await this.initCloud();
+        }
+
+        // Initialize Feedback Modal bindings
+        this.initFeedbackModal();
 
         // Mobile Sidebar Hamburger toggle
         const burger = document.getElementById("hamburger-toggle");
@@ -364,6 +378,94 @@ class HatanApp {
         });
     }
 
+    // --- Cloud Mode Initialization ---
+    async initCloud() {
+        try {
+            // Check session
+            this.currentUser = await HatanSupabase.getCurrentUser();
+            
+            // Show warning if not configured
+            document.getElementById("admin-supabase-warning").style.display = "none";
+
+            // Fetch booklets from Supabase
+            const cloudBooklets = await HatanSupabase.fetchBooklets();
+            
+            if (cloudBooklets.length === 0) {
+                // First run, migrate default booklets to Supabase
+                console.log("Supabase database is empty. Uploading default booklets...");
+                for (const bk of DEFAULT_BOOKLETS) {
+                    await HatanSupabase.saveBooklet({
+                        title: bk.title,
+                        category: bk.category,
+                        size: bk.size,
+                        description: bk.description,
+                        url: `pdf/${bk.filename}`,
+                        is_external: false
+                    });
+                }
+                // Fetch again
+                this.booklets = await HatanSupabase.fetchBooklets();
+            } else {
+                this.booklets = cloudBooklets;
+            }
+        } catch (e) {
+            console.error("Error initializing Supabase cloud data:", e);
+            // Fall back to local mode
+            this.isCloudMode = false;
+            this.refreshBookletsList();
+        }
+    }
+
+    initFeedbackModal() {
+        const modal = document.getElementById("feedback-modal");
+        const btnClose = document.getElementById("btn-close-feedback-modal");
+        const btnSubmit = document.getElementById("btn-submit-feedback");
+
+        if (!modal) return;
+
+        if (btnClose) {
+            btnClose.onclick = () => {
+                modal.style.display = "none";
+            };
+        }
+
+        window.addEventListener("click", (e) => {
+            if (e.target === modal) {
+                modal.style.display = "none";
+            }
+        });
+
+        if (btnSubmit) {
+            btnSubmit.onclick = async () => {
+                const bookletId = document.getElementById("feedback-modal-booklet-id").value;
+                const groomName = document.getElementById("feedback-groom-name").value.trim();
+                const comment = document.getElementById("feedback-groom-comment").value.trim();
+
+                if (!comment) {
+                    alert("אנא כתוב הערה או משוב.");
+                    return;
+                }
+
+                btnSubmit.disabled = true;
+                btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin"></i> שולח משוב...';
+
+                try {
+                    await HatanSupabase.submitFeedback(bookletId, groomName, comment);
+                    alert("המשוב נשלח בהצלחה למדריך החתנים! תודה רבה.");
+                    modal.style.display = "none";
+                    document.getElementById("feedback-groom-comment").value = "";
+                    document.getElementById("feedback-groom-name").value = "";
+                } catch (e) {
+                    console.error(e);
+                    alert("שגיאה בשליחת המשוב: " + e.message);
+                } finally {
+                    btnSubmit.disabled = false;
+                    btnSubmit.innerHTML = '<i class="fas fa-paper-plane"></i> שלח משוב לענן';
+                }
+            };
+        }
+    }
+
     // --- Dynamic Booklets Library Ingestion & Load ---
     loadCustomBooklets() {
         const saved = SafeStorage.getItem("hatan_custom_booklets");
@@ -386,17 +488,16 @@ class HatanApp {
     }
 
     refreshBookletsList() {
-        // Clone default booklets array
+        if (this.isCloudMode) return; // Loaded via initCloud asynchronously
+
         const list = JSON.parse(JSON.stringify(DEFAULT_BOOKLETS));
         
-        // Merge with overrides
         list.forEach(bk => {
             if (this.bookletOverrides[bk.id]) {
                 bk.description = this.bookletOverrides[bk.id];
             }
         });
 
-        // Concatenate custom booklets
         this.booklets = list.concat(this.customBooklets);
     }
 
@@ -415,7 +516,15 @@ class HatanApp {
         this.booklets.forEach(bk => {
             const card = document.createElement("div");
             card.className = "card";
-            card.style.marginBtm = "0";
+            card.style.marginBottom = "0";
+
+            const fileUrl = this.isCloudMode ? bk.url : `pdf/${bk.filename}`;
+            const feedbackBtnHtml = this.isCloudMode ? `
+                <button class="btn btn-secondary btn-feedback-booklet" data-id="${bk.id}" data-title="${bk.title}" style="font-size: 0.85rem; padding: 6px 12px; margin-right: 10px;">
+                    <i class="fas fa-comment-dots"></i> שלח משוב
+                </button>
+            ` : "";
+
             card.innerHTML = `
                 <div style="display: flex; gap: 1.5rem; align-items: flex-start;">
                     <div style="font-size: 2.5rem; color: #c62828;"><i class="fas fa-file-pdf"></i></div>
@@ -427,9 +536,10 @@ class HatanApp {
                             ${bk.description}
                         </p>
                         
-                        <a href="pdf/${bk.filename}" target="_blank" class="btn btn-secondary" style="font-size: 0.85rem; padding: 6px 12px;">
+                        <a href="${fileUrl}" target="_blank" class="btn btn-secondary" style="font-size: 0.85rem; padding: 6px 12px;">
                             <i class="fas fa-external-link-alt"></i> פתח מדריך (PDF)
                         </a>
+                        ${feedbackBtnHtml}
                     </div>
                 </div>
             `;
@@ -449,93 +559,332 @@ class HatanApp {
         if (techCount === 0) {
             techContainer.innerHTML = `<p style="text-align: center; color: var(--text-muted);">אין חוברות בקטגוריה זו.</p>`;
         }
+
+        // Bind feedback buttons
+        document.querySelectorAll(".btn-feedback-booklet").forEach(btn => {
+            btn.onclick = () => {
+                const bookletId = btn.getAttribute("data-id");
+                const bookletTitle = btn.getAttribute("data-title");
+                
+                document.getElementById("feedback-modal-booklet-id").value = bookletId;
+                document.getElementById("feedback-modal-booklet-title").innerText = bookletTitle;
+                document.getElementById("feedback-modal").style.display = "block";
+            };
+        });
     }
 
     // --- Admin Panel Logic ---
     initAdmin() {
         const lockedView = document.getElementById("admin-locked-view");
+        const sbLockedView = document.getElementById("admin-supabase-locked-view");
         const unlockedView = document.getElementById("admin-unlocked-view");
-        const errorMsg = document.getElementById("admin-lock-error");
-        const passcodeIn = document.getElementById("admin-passcode-input");
-        const btnUnlock = document.getElementById("btn-admin-unlock");
-        const btnLockBack = document.getElementById("btn-admin-lock-back");
+        const warningBanner = document.getElementById("admin-supabase-warning");
 
-        if (!lockedView || !unlockedView) return;
+        // Hide warning by default in cloud mode
+        if (warningBanner) warningBanner.style.display = this.isCloudMode ? "none" : "block";
 
-        // Reset view
-        lockedView.style.display = "block";
-        unlockedView.style.display = "none";
-        if (errorMsg) errorMsg.style.display = "none";
-        if (passcodeIn) passcodeIn.value = "";
-
-        // Unlock action
-        const tryUnlock = () => {
-            const code = passcodeIn.value;
-            if (code === "1234") {
-                lockedView.style.display = "none";
-                unlockedView.style.display = "block";
+        if (!this.isCloudMode) {
+            // Local Mode fallback
+            if (sbLockedView) sbLockedView.style.display = "none";
+            
+            // Check if already unlocked locally
+            const isLocalUnlocked = sessionStorage.getItem("hatan_local_unlocked") === "true";
+            if (isLocalUnlocked) {
+                if (lockedView) lockedView.style.display = "none";
+                if (unlockedView) unlockedView.style.display = "block";
                 this.renderAdminBooklets();
                 this.bindAdminAddForm();
             } else {
-                if (errorMsg) errorMsg.style.display = "block";
-                passcodeIn.value = "";
+                if (lockedView) lockedView.style.display = "block";
+                if (unlockedView) unlockedView.style.display = "none";
             }
-        };
 
-        if (btnUnlock) btnUnlock.onclick = tryUnlock;
-        if (passcodeIn) {
-            passcodeIn.onkeypress = (e) => {
-                if (e.key === "Enter") tryUnlock();
-            };
-        }
+            const btnUnlock = document.getElementById("btn-admin-unlock");
+            const passcodeIn = document.getElementById("admin-passcode-input");
+            const errorMsg = document.getElementById("admin-lock-error");
 
-        // Lock back action
-        if (btnLockBack) {
-            btnLockBack.onclick = () => {
-                lockedView.style.display = "block";
-                unlockedView.style.display = "none";
-                passcodeIn.value = "";
+            const tryUnlockLocal = () => {
+                if (passcodeIn.value === "1234") {
+                    sessionStorage.setItem("hatan_local_unlocked", "true");
+                    if (lockedView) lockedView.style.display = "none";
+                    if (unlockedView) unlockedView.style.display = "block";
+                    this.renderAdminBooklets();
+                    this.bindAdminAddForm();
+                } else {
+                    if (errorMsg) errorMsg.style.display = "block";
+                    passcodeIn.value = "";
+                }
             };
+
+            if (btnUnlock) btnUnlock.onclick = tryUnlockLocal;
+            if (passcodeIn) {
+                passcodeIn.onkeypress = (e) => {
+                    if (e.key === "Enter") tryUnlockLocal();
+                };
+            }
+
+            const btnLockBack = document.getElementById("btn-admin-lock-back");
+            if (btnLockBack) {
+                btnLockBack.onclick = () => {
+                    sessionStorage.removeItem("hatan_local_unlocked");
+                    if (lockedView) lockedView.style.display = "block";
+                    if (unlockedView) unlockedView.style.display = "none";
+                    if (passcodeIn) passcodeIn.value = "";
+                };
+            }
+        } else {
+            // Cloud Mode (Supabase Auth)
+            if (lockedView) lockedView.style.display = "none";
+
+            const updateCloudViews = () => {
+                if (this.currentUser) {
+                    if (sbLockedView) sbLockedView.style.display = "none";
+                    if (unlockedView) unlockedView.style.display = "block";
+                    
+                    // Show feedback panel in admin panel
+                    const feedbackCard = document.getElementById("admin-feedback-card");
+                    if (feedbackCard) feedbackCard.style.display = "block";
+
+                    this.renderAdminBooklets();
+                    this.bindAdminAddForm();
+                    this.renderAdminFeedbackList();
+                } else {
+                    if (sbLockedView) sbLockedView.style.display = "block";
+                    if (unlockedView) unlockedView.style.display = "none";
+                    
+                    const feedbackCard = document.getElementById("admin-feedback-card");
+                    if (feedbackCard) feedbackCard.style.display = "none";
+                }
+            };
+
+            updateCloudViews();
+
+            const btnLogin = document.getElementById("btn-admin-login");
+            const btnRegister = document.getElementById("btn-admin-register");
+            const emailIn = document.getElementById("admin-email-input");
+            const passwordIn = document.getElementById("admin-password-input");
+            const errorMsg = document.getElementById("admin-supabase-error");
+
+            if (btnLogin) {
+                btnLogin.onclick = async () => {
+                    const email = emailIn.value.trim();
+                    const password = passwordIn.value.trim();
+                    if (!email || !password) {
+                        alert("אנא מלא את כל השדות.");
+                        return;
+                    }
+                    btnLogin.disabled = true;
+                    btnLogin.innerHTML = '<i class="fas fa-spinner fa-spin"></i> מתחבר...';
+                    if (errorMsg) errorMsg.style.display = "none";
+
+                    try {
+                        const session = await HatanSupabase.signIn(email, password);
+                        this.currentUser = session.user;
+                        updateCloudViews();
+                    } catch (e) {
+                        console.error(e);
+                        if (errorMsg) {
+                            errorMsg.innerText = "שגיאה בהתחברות: " + e.message;
+                            errorMsg.style.display = "block";
+                        }
+                    } finally {
+                        btnLogin.disabled = false;
+                        btnLogin.innerHTML = '<i class="fas fa-sign-in-alt"></i> התחברות';
+                    }
+                };
+            }
+
+            if (btnRegister) {
+                btnRegister.onclick = async () => {
+                    const email = emailIn.value.trim();
+                    const password = passwordIn.value.trim();
+                    if (!email || !password) {
+                        alert("אנא מלא את כל השדות.");
+                        return;
+                    }
+                    if (password.length < 6) {
+                        alert("הסיסמה חייבת להכיל לפחות 6 תווים.");
+                        return;
+                    }
+                    btnRegister.disabled = true;
+                    btnRegister.innerHTML = '<i class="fas fa-spinner fa-spin"></i> נרשם...';
+                    if (errorMsg) errorMsg.style.display = "none";
+
+                    try {
+                        await HatanSupabase.signUp(email, password);
+                        alert("הרשמה בוצעה בהצלחה! אנא בדוק את תיבת המייל שלך לאישור החשבון (במידה ומוגדר אישור מייל), או נסה להתחבר.");
+                    } catch (e) {
+                        console.error(e);
+                        if (errorMsg) {
+                            errorMsg.innerText = "שגיאה בהרשמה: " + e.message;
+                            errorMsg.style.display = "block";
+                        }
+                    } finally {
+                        btnRegister.disabled = false;
+                        btnRegister.innerHTML = '<i class="fas fa-user-plus"></i> הרשמה כמדריך';
+                    }
+                };
+            }
+
+            const btnSignOut = document.getElementById("btn-admin-lock-back");
+            if (btnSignOut) {
+                btnSignOut.onclick = async () => {
+                    if (confirm("האם ברצונך להתנתק מפאנל המדריך?")) {
+                        await HatanSupabase.signOut();
+                        this.currentUser = null;
+                        updateCloudViews();
+                    }
+                };
+            }
         }
     }
 
     bindAdminAddForm() {
+        const btnToggleFile = document.getElementById("btn-toggle-upload-file");
+        const btnToggleLink = document.getElementById("btn-toggle-upload-link");
+        const fileGroup = document.getElementById("group-file-upload");
+        const linkGroup = document.getElementById("group-link-input");
+
+        if (btnToggleFile && btnToggleLink) {
+            btnToggleFile.onclick = () => {
+                this.uploadType = "file";
+                btnToggleFile.classList.add("active");
+                btnToggleLink.classList.remove("active");
+                if (fileGroup) fileGroup.style.display = "block";
+                if (linkGroup) linkGroup.style.display = "none";
+            };
+
+            btnToggleLink.onclick = () => {
+                this.uploadType = "link";
+                btnToggleLink.classList.add("active");
+                btnToggleFile.classList.remove("active");
+                if (fileGroup) fileGroup.style.display = "none";
+                if (linkGroup) linkGroup.style.display = "block";
+            };
+        }
+
+        const localFilenameInput = document.getElementById("admin-booklet-filename");
+        const fileInput = document.getElementById("admin-booklet-file");
+
+        if (!this.isCloudMode) {
+            // Local mode: hide file browser, show filename input, hide toggles
+            if (btnToggleFile && btnToggleFile.parentElement) {
+                btnToggleFile.parentElement.parentElement.style.display = "none";
+            }
+            if (fileInput) fileInput.style.display = "none";
+            if (localFilenameInput) {
+                localFilenameInput.style.display = "block";
+                localFilenameInput.previousElementSibling.innerText = "שם קובץ מקומי בתיקיית pdf (כולל .pdf):";
+            }
+        } else {
+            // Cloud mode: show file browser, hide local filename input
+            if (btnToggleFile && btnToggleFile.parentElement) {
+                btnToggleFile.parentElement.parentElement.style.display = "grid";
+            }
+            if (fileInput) fileInput.style.display = "block";
+            if (localFilenameInput) localFilenameInput.style.display = "none";
+        }
+
         const btnAdd = document.getElementById("btn-admin-add-booklet");
         if (!btnAdd) return;
 
-        btnAdd.onclick = () => {
+        btnAdd.onclick = async () => {
             const title = document.getElementById("admin-booklet-title").value.trim();
-            const filename = document.getElementById("admin-booklet-filename").value.trim();
             const category = document.getElementById("admin-booklet-category").value;
             const size = document.getElementById("admin-booklet-size").value.trim();
             const description = document.getElementById("admin-booklet-description").value.trim();
+            const spinner = document.getElementById("admin-upload-spinner");
 
-            if (!title || !filename || !description) {
-                alert("אנא מלא את כל שדות החובה: כותרת, שם קובץ ותיאור הסבר.");
+            if (!title || !description) {
+                alert("אנא מלא את כל שדות החובה: כותרת ותיאור.");
                 return;
             }
 
-            // Create new booklet object
-            const newBk = {
-                id: "custom_" + Date.now(),
-                title: title,
-                filename: filename,
-                category: category,
-                size: size || "1.0 MB",
-                description: description
-            };
+            let fileUrl = "";
+            let isExternal = false;
 
-            this.customBooklets.push(newBk);
-            this.saveCustomBooklets();
-            this.renderAdminBooklets();
-            
-            // Reset Form inputs
+            if (this.isCloudMode) {
+                if (this.uploadType === "file") {
+                    const fileEl = document.getElementById("admin-booklet-file");
+                    const file = fileEl.files[0];
+                    if (!file) {
+                        alert("אנא בחר קובץ PDF להעלאה.");
+                        return;
+                    }
+                    
+                    if (spinner) spinner.style.display = "inline";
+                    btnAdd.disabled = true;
+
+                    try {
+                        fileUrl = await HatanSupabase.uploadFile(file);
+                    } catch (e) {
+                        console.error(e);
+                        alert("שגיאה בהעלאת הקובץ לענן: " + e.message);
+                        if (spinner) spinner.style.display = "none";
+                        btnAdd.disabled = false;
+                        return;
+                    }
+                } else {
+                    fileUrl = document.getElementById("admin-booklet-url").value.trim();
+                    if (!fileUrl) {
+                        alert("אנא הזן כתובת קישור חיצונית.");
+                        return;
+                    }
+                    isExternal = true;
+                }
+
+                try {
+                    const newBk = {
+                        title,
+                        category,
+                        size: size || "1.0 MB",
+                        description,
+                        url: fileUrl,
+                        is_external: isExternal
+                    };
+                    await HatanSupabase.saveBooklet(newBk);
+                    alert("החוברת הועלתה ונשמרה בענן בהצלחה!");
+                } catch (e) {
+                    console.error(e);
+                    alert("שגיאה בשמירת פרטי החוברת בענן: " + e.message);
+                } finally {
+                    if (spinner) spinner.style.display = "none";
+                    btnAdd.disabled = false;
+                }
+            } else {
+                // Local Mode fallback
+                const filename = document.getElementById("admin-booklet-filename").value.trim();
+                if (!filename) {
+                    alert("אנא הזן שם קובץ מקומי.");
+                    return;
+                }
+
+                const newBk = {
+                    id: "custom_" + Date.now(),
+                    title: title,
+                    filename: filename,
+                    category: category,
+                    size: size || "1.0 MB",
+                    description: description
+                };
+
+                this.customBooklets.push(newBk);
+                this.saveCustomBooklets();
+                alert("החוברת נוספה לספרייה המקומית בהצלחה!");
+            }
+
+            // Reset inputs
             document.getElementById("admin-booklet-title").value = "";
-            document.getElementById("admin-booklet-filename").value = "";
             document.getElementById("admin-booklet-size").value = "";
             document.getElementById("admin-booklet-description").value = "";
+            if (document.getElementById("admin-booklet-file")) document.getElementById("admin-booklet-file").value = "";
+            if (document.getElementById("admin-booklet-url")) document.getElementById("admin-booklet-url").value = "";
+            if (document.getElementById("admin-booklet-filename")) document.getElementById("admin-booklet-filename").value = "";
 
-            alert("החוברת נוספה לספרייה בהצלחה! וודא שהעתקת אותה לתיקיית pdf בפרויקט.");
+            if (this.isCloudMode) {
+                this.booklets = await HatanSupabase.fetchBooklets();
+            }
+            this.renderAdminBooklets();
         };
     }
 
@@ -555,7 +904,7 @@ class HatanApp {
             row.style.flexDirection = "column";
             row.style.gap = "8px";
 
-            const isCustom = bk.id.startsWith("custom_");
+            const isCustom = this.isCloudMode ? (bk.id && !String(bk.id).startsWith("foundations_") && !String(bk.id).startsWith("sacred_") && !String(bk.id).startsWith("intimacy_") && !String(bk.id).startsWith("total_") && !String(bk.id).startsWith("sex_") && !String(bk.id).startsWith("stamina_") && !String(bk.id).startsWith("cum_") && !String(bk.id).startsWith("screaming_") && !String(bk.id).startsWith("ultimate_")) : bk.id.startsWith("custom_");
 
             row.innerHTML = `
                 <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed var(--border-color); padding-bottom: 8px;">
@@ -563,7 +912,7 @@ class HatanApp {
                         <strong style="color: var(--secondary); font-size: 1.05rem;">${bk.title}</strong>
                         <span style="font-size: 0.8rem; color: var(--text-muted); margin-right: 10px;">קטגוריה: ${bk.category === 'jewish_purity' ? 'הלכה ורגש' : 'סיבולת/טכניקה'}</span>
                     </div>
-                    ${isCustom ? `<button class="btn btn-secondary btn-delete-custom" data-id="${bk.id}" style="padding: 4px 10px; font-size: 0.8rem; background-color: rgba(198, 40, 40, 0.1); color: var(--error); border-color: rgba(198, 40, 40, 0.2);"><i class="fas fa-trash-alt"></i> מחק חוברת</button>` : `<span style="font-size: 0.8rem; color: var(--primary-dark); font-weight: 700;">חוברת מערכת (דיפולט)</span>`}
+                    ${isCustom ? `<button class="btn btn-secondary btn-delete-custom" data-id="${bk.id}" style="padding: 4px 10px; font-size: 0.8rem; background-color: rgba(198, 40, 40, 0.1); color: var(--error); border-color: rgba(198, 40, 40, 0.2);"><i class="fas fa-trash-alt"></i> מחק חוברת</button>` : `<span style="font-size: 0.8rem; color: var(--primary-dark); font-weight: 700;">חוברת מערכת</span>`}
                 </div>
                 <div class="form-group" style="margin-bottom: 0;">
                     <label style="font-size: 0.85rem; font-weight: 600;">תיאור הסבר המוצג לחתן (ניתן לערוך):</label>
@@ -574,43 +923,131 @@ class HatanApp {
                 </div>
             `;
 
-            // Bind save description button
-            row.querySelector(".btn-save-desc").onclick = () => {
+            row.querySelector(".btn-save-desc").onclick = async () => {
                 const newDesc = row.querySelector(".txt-edit-desc").value.trim();
                 if (!newDesc) {
                     alert("הסבר החוברת אינו יכול להיות ריק.");
                     return;
                 }
 
-                if (isCustom) {
-                    // Custom booklet - update in custom array
-                    const idx = this.customBooklets.findIndex(c => c.id === bk.id);
-                    if (idx > -1) {
-                        this.customBooklets[idx].description = newDesc;
-                        this.saveCustomBooklets();
+                if (this.isCloudMode) {
+                    try {
+                        const updatedBk = { ...bk, description: newDesc };
+                        await HatanSupabase.saveBooklet(updatedBk);
+                        alert("תיאור החוברת עודכן בענן בהצלחה!");
+                        this.booklets = await HatanSupabase.fetchBooklets();
+                    } catch (e) {
+                        console.error(e);
+                        alert("שגיאה בעדכון התיאור בענן: " + e.message);
                     }
                 } else {
-                    // Default booklet - save in overrides
-                    this.bookletOverrides[bk.id] = newDesc;
-                    this.saveBookletOverrides();
+                    if (isCustom) {
+                        const idx = this.customBooklets.findIndex(c => c.id === bk.id);
+                        if (idx > -1) {
+                            this.customBooklets[idx].description = newDesc;
+                            this.saveCustomBooklets();
+                        }
+                    } else {
+                        this.bookletOverrides[bk.id] = newDesc;
+                        this.saveBookletOverrides();
+                    }
+                    alert("תיאור החוברת עודכן ונשמר בהצלחה!");
                 }
-
-                alert("תיאור החוברת עודכן ונשמר בהצלחה!");
             };
 
-            // Bind delete custom booklet button
             if (isCustom) {
-                row.querySelector(".btn-delete-custom").onclick = () => {
+                row.querySelector(".btn-delete-custom").onclick = async () => {
                     if (confirm(`האם אתה בטוח שברצונך למחוק את החוברת "${bk.title}" לצמיתות?`)) {
-                        this.customBooklets = this.customBooklets.filter(c => c.id !== bk.id);
-                        this.saveCustomBooklets();
-                        this.renderAdminBooklets();
+                        if (this.isCloudMode) {
+                            try {
+                                await HatanSupabase.deleteBooklet(bk.id);
+                                alert("החוברת נמחקה מהענן בהצלחה!");
+                                this.booklets = await HatanSupabase.fetchBooklets();
+                                this.renderAdminBooklets();
+                            } catch (e) {
+                                console.error(e);
+                                alert("שגיאה במחיקת החוברת: " + e.message);
+                            }
+                        } else {
+                            this.customBooklets = this.customBooklets.filter(c => c.id !== bk.id);
+                            this.saveCustomBooklets();
+                            this.renderAdminBooklets();
+                        }
                     }
                 };
             }
 
             container.appendChild(row);
         });
+    }
+
+    async renderAdminFeedbackList() {
+        const container = document.getElementById("admin-feedback-list");
+        if (!container) return;
+
+        container.innerHTML = '<p style="text-align: center; color: var(--text-muted);"><i class="fas fa-spinner fa-spin"></i> טוען משובים...</p>';
+
+        try {
+            const feedback = await HatanSupabase.fetchAllFeedback();
+            
+            if (feedback.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: var(--text-muted); padding: 1rem;">אין משובים זמינים כרגע.</p>';
+                return;
+            }
+
+            container.innerHTML = "";
+
+            feedback.forEach(item => {
+                const card = document.createElement("div");
+                card.style.border = "1px solid var(--border-color)";
+                card.style.background = "var(--bg-main)";
+                card.style.padding = "1rem";
+                card.style.borderRadius = "8px";
+                card.style.position = "relative";
+                card.style.display = "flex";
+                card.style.flexDirection = "column";
+                card.style.gap = "6px";
+
+                const date = new Date(item.created_at).toLocaleDateString("he-IL", {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    day: 'numeric',
+                    month: 'numeric',
+                    year: 'numeric'
+                });
+
+                card.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed var(--border-color); padding-bottom: 6px;">
+                        <div>
+                            <strong>מאת: ${item.groom_name}</strong>
+                            <span style="font-size: 0.8rem; color: var(--text-muted); margin-right: 15px;">חוברת: ${item.booklets ? item.booklets.title : "לא ידוע"}</span>
+                        </div>
+                        <span style="font-size: 0.8rem; color: var(--text-muted);">${date}</span>
+                    </div>
+                    <p style="font-size: 0.95rem; margin: 5px 0 0 0; line-height: 1.5;">${item.comment}</p>
+                    <div style="text-align: left; margin-top: 5px;">
+                        <button class="btn btn-secondary btn-delete-feedback" data-id="${item.id}" style="padding: 2px 8px; font-size: 0.75rem; background-color: rgba(198, 40, 40, 0.05); color: var(--error); border-color: rgba(198, 40, 40, 0.1);"><i class="fas fa-trash-alt"></i> מחק הערה</button>
+                    </div>
+                `;
+
+                card.querySelector(".btn-delete-feedback").onclick = async () => {
+                    if (confirm("האם אתה בטוח שברצונך למחוק משוב זה?")) {
+                        try {
+                            await HatanSupabase.deleteFeedback(item.id);
+                            this.renderAdminFeedbackList();
+                        } catch (e) {
+                            console.error(e);
+                            alert("שגיאה במחיקת המשוב: " + e.message);
+                        }
+                    }
+                };
+
+                container.appendChild(card);
+            });
+        } catch (e) {
+            console.error("Error loading feedback list:", e);
+            container.innerHTML = `<p style="text-align: center; color: var(--error); padding: 1rem;">שגיאה בטעינת משובים: ${e.message}</p>`;
+        }
     }
 
     // --- Checklist system ---
