@@ -2,8 +2,8 @@
 // ==========================================
 // פתח פרויקט חינמי ב-https://supabase.com והעתק את הפרטים הבאים משם:
 
-const SUPABASE_URL = "YOUR_SUPABASE_PROJECT_URL";
-const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
+const SUPABASE_URL = "https://qafevdjthuyjmewghwqb.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_TZdXswS06lFs5fWd7U3jNw_x5x0lJmL";
 
 // SQL להרצה ב-SQL Editor של Supabase להקמת הטבלאות ושרת הקבצים:
 /*
