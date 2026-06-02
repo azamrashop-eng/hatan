@@ -482,10 +482,12 @@ class HatanApp {
             }
         };
 
-        btnUnlock?.onclick = tryUnlock;
-        passcodeIn?.onkeypress = (e) => {
-            if (e.key === "Enter") tryUnlock();
-        };
+        if (btnUnlock) btnUnlock.onclick = tryUnlock;
+        if (passcodeIn) {
+            passcodeIn.onkeypress = (e) => {
+                if (e.key === "Enter") tryUnlock();
+            };
+        }
 
         // Lock back action
         if (btnLockBack) {
