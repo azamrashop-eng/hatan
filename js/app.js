@@ -528,12 +528,23 @@ class HatanApp {
         let hebCount = 0;
         let techCount = 0;
 
+        const getBaseUrl = () => {
+            const path = window.location.pathname;
+            if (path.endsWith('.html') || path.endsWith('.htm')) {
+                return path.substring(0, path.lastIndexOf('/') + 1);
+            }
+            return path.endsWith('/') ? path : path + '/';
+        };
+        const baseUrl = getBaseUrl();
+
         this.booklets.forEach(bk => {
             const card = document.createElement("div");
             card.className = "card";
             card.style.marginBottom = "0";
 
-            const fileUrl = bk.url || (bk.filename ? `pdf/${bk.filename}` : "");
+            const fileUrl = bk.url 
+                ? (bk.url.startsWith('http') ? bk.url : baseUrl + bk.url) 
+                : (bk.filename ? `${baseUrl}pdf/${bk.filename}` : "");
             const feedbackBtnHtml = this.isCloudMode ? `
                 <button class="btn btn-secondary btn-feedback-booklet" data-id="${bk.id}" data-title="${bk.title}" style="font-size: 0.85rem; padding: 6px 12px; margin-right: 10px;">
                     <i class="fas fa-comment-dots"></i> שלח משוב
