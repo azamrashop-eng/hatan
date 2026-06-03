@@ -533,7 +533,7 @@ class HatanApp {
             card.className = "card";
             card.style.marginBottom = "0";
 
-            const fileUrl = this.isCloudMode ? bk.url : `pdf/${bk.filename}`;
+            const fileUrl = bk.url || (bk.filename ? `pdf/${bk.filename}` : "");
             const feedbackBtnHtml = this.isCloudMode ? `
                 <button class="btn btn-secondary btn-feedback-booklet" data-id="${bk.id}" data-title="${bk.title}" style="font-size: 0.85rem; padding: 6px 12px; margin-right: 10px;">
                     <i class="fas fa-comment-dots"></i> שלח משוב
