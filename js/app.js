@@ -24,6 +24,9 @@ class HatanApp {
     }
 
     async init() {
+        // Initialize Google Analytics
+        this.initAnalytics();
+
         // Initialize Navigation
         this.initNavigation();
         
@@ -92,6 +95,14 @@ class HatanApp {
                 const targetSec = document.getElementById(targetSectionId);
                 if (targetSec) {
                     targetSec.classList.add("active");
+                }
+
+                // Send GA4 page view event
+                if (window.gtag) {
+                    window.gtag('event', 'page_view', {
+                        page_title: targetSectionId,
+                        page_path: '/' + targetSectionId
+                    });
                 }
 
                 // Custom trigger updates
@@ -322,6 +333,9 @@ class HatanApp {
     initCalendar() {
         const formHefsekDate = document.getElementById("hefsek-date-input");
         const formHefsekTime = document.getElementById("hefsek-time-select");
+        const formVestDate = document.getElementById("vest-date-input");
+        const formVestTime = document.getElementById("vest-time-select");
+        const formVestInterval = document.getElementById("vest-interval-input");
         const btnSave = document.getElementById("btn-save-hefsek");
         const btnClear = document.getElementById("btn-clear-hefsek");
 
@@ -330,17 +344,34 @@ class HatanApp {
             if (formHefsekDate) formHefsekDate.value = this.calendar.data.hefsekDate;
             if (formHefsekTime) formHefsekTime.value = this.calendar.data.hefsekTime;
         }
+        if (this.calendar.data.vestDate) {
+            if (formVestDate) formVestDate.value = this.calendar.data.vestDate;
+            if (formVestTime) formVestTime.value = this.calendar.data.vestTime;
+            if (formVestInterval) formVestInterval.value = this.calendar.data.vestInterval;
+        }
+
+        // Initialize Notification Permission UI
+        this.calendar.setupNotifications();
+
+        // Start reminders check on load and every 5 minutes
+        this.calendar.checkReminders();
+        setInterval(() => {
+            this.calendar.checkReminders();
+        }, 5 * 60 * 1000);
 
         btnSave?.addEventListener("click", () => {
             const dateVal = formHefsekDate.value;
             const timeVal = formHefsekTime.value;
+            const vestDateVal = formVestDate.value;
+            const vestTimeVal = formVestTime.value;
+            const vestIntervalVal = formVestInterval.value;
 
-            if (!dateVal) {
-                alert("אנא בחר תאריך תקף להפסק טהרה");
+            if (!dateVal && !vestDateVal) {
+                alert("אנא הזן תאריך הפסק טהרה או תאריך תחילת ווסת לחישוב");
                 return;
             }
 
-            this.calendar.setHefsek(dateVal, timeVal);
+            this.calendar.setHefsek(dateVal, timeVal, vestDateVal, vestTimeVal, vestIntervalVal);
             this.calendar.renderCalendar('calendar-grid-container', 'calendar-instructions-box');
         });
 
@@ -348,6 +379,8 @@ class HatanApp {
             if (confirm("האם אתה בטוח שברצונך לאפס את הלוח הנוכחי?")) {
                 this.calendar.clearHefsek();
                 if (formHefsekDate) formHefsekDate.value = "";
+                if (formVestDate) formVestDate.value = "";
+                if (formVestInterval) formVestInterval.value = "";
                 this.calendar.renderCalendar('calendar-grid-container', 'calendar-instructions-box');
             }
         });
@@ -1150,6 +1183,28 @@ class HatanApp {
                 status.style.display = "inline";
                 setTimeout(() => status.style.display = "none", 2000);
             }
+        });
+    }
+
+    initAnalytics() {
+        const gaId = window.GOOGLE_ANALYTICS_ID;
+        if (!gaId || gaId === "YOUR_GOOGLE_ANALYTICS_ID") return;
+
+        // Load GA4 script dynamically
+        const script = document.createElement("script");
+        script.async = true;
+        script.src = `https://www.googletagmanager.com/gtag/js?id=${gaId}`;
+        document.head.appendChild(script);
+
+        window.dataLayer = window.dataLayer || [];
+        window.gtag = function() { dataLayer.push(arguments); };
+        window.gtag('js', new Date());
+        window.gtag('config', gaId, { send_page_view: false });
+
+        // Send initial page view
+        window.gtag('event', 'page_view', {
+            page_title: 'section-dashboard',
+            page_path: '/section-dashboard'
         });
     }
 }

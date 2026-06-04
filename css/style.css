@@ -1277,3 +1277,43 @@ p {
     display: block;
 }
 
+/* Custom Calendar Vest (Separation) Day Styling */
+.calendar-cell.vest {
+    background-color: rgba(239, 108, 0, 0.08) !important;
+    border-color: rgba(239, 108, 0, 0.4) !important;
+}
+
+.calendar-cell.vest:hover {
+    background-color: rgba(239, 108, 0, 0.15) !important;
+    border-color: rgba(239, 108, 0, 0.8) !important;
+}
+
+.calendar-cell.nekiim.vest {
+    background: linear-gradient(135deg, rgba(197, 168, 128, 0.15) 0%, rgba(239, 108, 0, 0.1) 100%) !important;
+    border-color: #ef6c00 !important;
+}
+
+.calendar-cell .day-label.vest-label {
+    background-color: #ef6c00 !important;
+    color: #ffffff !important;
+    margin-top: 4px;
+}
+
+[data-theme="dark"] .calendar-cell.vest,
+[data-theme="warm"] .calendar-cell.vest {
+    background-color: rgba(255, 179, 0, 0.1) !important;
+    border-color: rgba(255, 179, 0, 0.4) !important;
+}
+
+[data-theme="dark"] .calendar-cell.nekiim.vest,
+[data-theme="warm"] .calendar-cell.nekiim.vest {
+    background: linear-gradient(135deg, rgba(197, 168, 128, 0.15) 0%, rgba(255, 179, 0, 0.1) 100%) !important;
+    border-color: #ffb300 !important;
+}
+
+[data-theme="dark"] .calendar-cell .day-label.vest-label,
+[data-theme="warm"] .calendar-cell .day-label.vest-label {
+    background-color: #ffb300 !important;
+    color: #000000 !important;
+}
+
