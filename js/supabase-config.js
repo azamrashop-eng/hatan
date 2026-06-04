@@ -32,15 +32,33 @@ CREATE TABLE booklet_feedback (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- 3. הגדרות אבטחת טבלאות (שכולם יוכלו לקרוא ולשלוח משוב, אך רק מדריך מחובר יערוך/ימחק)
+-- 3. יצירת טבלת שיעורים מוקלטים
+CREATE TABLE recorded_lessons (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    title TEXT NOT NULL,
+    category TEXT NOT NULL,
+    stage TEXT NOT NULL,
+    media_type TEXT NOT NULL,
+    url TEXT NOT NULL,
+    order_index INTEGER DEFAULT 0,
+    description TEXT NOT NULL,
+    created_by UUID,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 4. הגדרות אבטחת טבלאות (שכולם יוכלו לקרוא, אך רק מדריך מחובר יערוך/ימחק)
 ALTER TABLE booklets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE booklet_feedback ENABLE ROW LEVEL SECURITY;
+ALTER TABLE recorded_lessons ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Allow public read of booklets" ON booklets FOR SELECT USING (true);
 CREATE POLICY "Allow auth write of booklets" ON booklets FOR ALL TO authenticated USING (true);
 
 CREATE POLICY "Allow public insert of feedback" ON booklet_feedback FOR INSERT WITH CHECK (true);
 CREATE POLICY "Allow auth all of feedback" ON booklet_feedback FOR ALL TO authenticated USING (true);
+
+CREATE POLICY "Allow public read of recorded_lessons" ON recorded_lessons FOR SELECT USING (true);
+CREATE POLICY "Allow auth write of recorded_lessons" ON recorded_lessons FOR ALL TO authenticated USING (true);
 
 -- הערה: יש ליצור גם Bucket בשם "booklets" במדור Storage ב-Supabase ולהגדיר אותו כ-Public.
 */
@@ -204,6 +222,61 @@ const HatanSupabase = {
         if (!this.isConfigured()) throw new Error("Supabase is not configured.");
         const { error } = await supabaseClient
             .from('booklet_feedback')
+            .delete()
+            .eq('id', id);
+        
+        if (error) throw error;
+    },
+
+    // --- Recorded Lessons ---
+    async fetchRecordedLessons() {
+        if (!this.isConfigured()) return [];
+        const { data, error } = await supabaseClient
+            .from('recorded_lessons')
+            .select('*')
+            .order('order_index', { ascending: true })
+            .order('created_at', { ascending: true });
+        
+        if (error) throw error;
+        return data;
+    },
+
+    async saveRecordedLesson(lesson) {
+        if (!this.isConfigured()) throw new Error("Supabase is not configured.");
+        const user = await this.getCurrentUser();
+        const payload = {
+            title: lesson.title,
+            category: lesson.category,
+            stage: lesson.stage,
+            media_type: lesson.media_type,
+            url: lesson.url,
+            order_index: parseInt(lesson.order_index, 10) || 0,
+            description: lesson.description,
+            created_by: user ? user.id : null
+        };
+
+        if (lesson.id && !String(lesson.id).startsWith("custom_")) {
+            const { data, error } = await supabaseClient
+                .from('recorded_lessons')
+                .update(payload)
+                .eq('id', lesson.id)
+                .select();
+            if (error) throw error;
+            return data[0];
+        } else {
+            const { data, error } = await supabaseClient
+                .from('recorded_lessons')
+                .insert([payload])
+                .select();
+            if (error) throw error;
+            return data[0];
+        }
+    },
+
+    async deleteRecordedLesson(id) {
+        if (!this.isConfigured()) throw new Error("Supabase is not configured.");
+        const { error } = await supabaseClient
+            .from('recorded_lessons')
             .delete()
             .eq('id', id);
         

@@ -1,5 +1,28 @@
 // Main Application Controller
 
+const DEFAULT_RECORDED_LESSONS = [
+    {
+        id: "default_1",
+        title: "שיעור וידאו: יסודות התקשורת הזוגית היהודית",
+        category: "relationship",
+        stage: "stage_preparation",
+        media_type: "video",
+        url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        order_index: 1,
+        description: "שיעור וידאו מקיף העוסק ביסודות שלום בית, הקשבה הדדית וניהול נכון של שיחות רגשיות."
+    },
+    {
+        id: "default_2",
+        title: "שיעור שמע: הכנה והרפיה לקראת ליל הכלולות",
+        category: "intimacy",
+        stage: "stage_wedding",
+        media_type: "audio",
+        url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+        order_index: 2,
+        description: "פודקאסט שמע מיוחד המנחה את החתן כיצד ליצור אווירה רגועה, להתמודד עם מתח וליצור חיבור עדין ובוטח."
+    }
+];
+
 class HatanApp {
     constructor() {
         this.currentLessonId = 1;
@@ -15,6 +38,8 @@ class HatanApp {
         this.booklets = [];
         this.customBooklets = this.loadCustomBooklets();
         this.bookletOverrides = this.loadBookletOverrides();
+        this.recordedLessons = [];
+        this.customRecordedLessons = this.loadCustomRecordedLessons();
         
         // Supabase Hybrid Mode
         this.isCloudMode = window.HatanSupabase && window.HatanSupabase.isConfigured();
@@ -22,6 +47,7 @@ class HatanApp {
         this.uploadType = "file"; // "file" or "link"
 
         this.refreshBookletsList();
+        this.refreshRecordedLessonsList();
     }
 
     async init() {
@@ -47,6 +73,7 @@ class HatanApp {
         this.simulator.init('sim-chat-box', 'sim-options-panel', 'faq-list-container');
         this.initQA();
         this.initAi();
+        this.initRecordedLessons();
 
         // Initialize Checklists
         this.initChecklists();
@@ -116,6 +143,8 @@ class HatanApp {
                     this.simulator.resetRoleplay();
                 } else if (targetSectionId === 'section-library') {
                     this.renderLibrary();
+                } else if (targetSectionId === 'section-recorded-lessons') {
+                    this.renderRecordedLessons();
                 } else if (targetSectionId === 'section-ai') {
                     this.scrollToBottom('ai-chat-box');
                 } else if (targetSectionId === 'section-admin') {
@@ -569,11 +598,32 @@ class HatanApp {
             } else {
                 this.booklets = cloudBooklets;
             }
+
+            // Fetch recorded lessons from Supabase
+            const cloudLessons = await HatanSupabase.fetchRecordedLessons();
+            if (cloudLessons.length === 0) {
+                if (this.currentUser) {
+                    console.log("Supabase recorded lessons are empty. Uploading default lessons...");
+                    for (const les of DEFAULT_RECORDED_LESSONS) {
+                        try {
+                            await HatanSupabase.saveRecordedLesson(les);
+                        } catch (err) {
+                            console.error("Failed to migrate lesson:", les.title, err);
+                        }
+                    }
+                    this.recordedLessons = await HatanSupabase.fetchRecordedLessons();
+                } else {
+                    this.recordedLessons = JSON.parse(JSON.stringify(DEFAULT_RECORDED_LESSONS));
+                }
+            } else {
+                this.recordedLessons = cloudLessons;
+            }
         } catch (e) {
             console.error("Error initializing Supabase cloud data:", e);
             // Fall back to local mode
             this.isCloudMode = false;
             this.refreshBookletsList();
+            this.refreshRecordedLessonsList();
         }
     }
 
@@ -759,6 +809,17 @@ class HatanApp {
             // Local Mode fallback
             if (sbLockedView) sbLockedView.style.display = "none";
             
+            // Local mode setups
+            const bookletFileIn = document.getElementById("admin-booklet-file");
+            const bookletFilenameIn = document.getElementById("admin-booklet-filename");
+            if (bookletFileIn) bookletFileIn.style.display = "none";
+            if (bookletFilenameIn) bookletFilenameIn.style.display = "block";
+
+            const mediaFileIn = document.getElementById("admin-media-file");
+            const mediaFilenameIn = document.getElementById("admin-media-filename");
+            if (mediaFileIn) mediaFileIn.style.display = "none";
+            if (mediaFilenameIn) mediaFilenameIn.style.display = "block";
+
             // Check if already unlocked locally
             const isLocalUnlocked = sessionStorage.getItem("hatan_local_unlocked") === "true";
             if (isLocalUnlocked) {
@@ -766,6 +827,8 @@ class HatanApp {
                 if (unlockedView) unlockedView.style.display = "block";
                 this.renderAdminBooklets();
                 this.bindAdminAddForm();
+                this.renderAdminRecordedLessons();
+                this.bindAdminMediaForm();
             } else {
                 if (lockedView) lockedView.style.display = "block";
                 if (unlockedView) unlockedView.style.display = "none";
@@ -782,6 +845,8 @@ class HatanApp {
                     if (unlockedView) unlockedView.style.display = "block";
                     this.renderAdminBooklets();
                     this.bindAdminAddForm();
+                    this.renderAdminRecordedLessons();
+                    this.bindAdminMediaForm();
                 } else {
                     if (errorMsg) errorMsg.style.display = "block";
                     passcodeIn.value = "";
@@ -819,6 +884,8 @@ class HatanApp {
 
                     this.renderAdminBooklets();
                     this.bindAdminAddForm();
+                    this.renderAdminRecordedLessons();
+                    this.bindAdminMediaForm();
                     this.renderAdminFeedbackList();
                 } else {
                     if (sbLockedView) sbLockedView.style.display = "block";
@@ -1321,6 +1388,354 @@ class HatanApp {
         });
     }
 }
+
+    // --- Recorded Lessons System ---
+    loadCustomRecordedLessons() {
+        const saved = SafeStorage.getItem("hatan_custom_recorded_lessons");
+        return saved ? JSON.parse(saved) : [];
+    }
+
+    saveCustomRecordedLessons() {
+        SafeStorage.setItem("hatan_custom_recorded_lessons", JSON.stringify(this.customRecordedLessons));
+        this.refreshRecordedLessonsList();
+    }
+
+    refreshRecordedLessonsList() {
+        if (this.isCloudMode) return;
+        this.recordedLessons = DEFAULT_RECORDED_LESSONS.concat(this.customRecordedLessons);
+    }
+
+    initRecordedLessons() {
+        const categoryTabs = document.querySelectorAll("#media-category-tabs .media-tab");
+        const stageTabs = document.querySelectorAll("#media-stage-tabs .media-tab");
+        const searchInput = document.getElementById("media-search");
+        const sortSelect = document.getElementById("media-sort-select");
+
+        categoryTabs.forEach(tab => {
+            tab.addEventListener("click", () => {
+                categoryTabs.forEach(t => t.classList.remove("active"));
+                tab.classList.add("active");
+                this.renderRecordedLessons();
+            });
+        });
+
+        stageTabs.forEach(tab => {
+            tab.addEventListener("click", () => {
+                stageTabs.forEach(t => t.classList.remove("active"));
+                tab.classList.add("active");
+                this.renderRecordedLessons();
+            });
+        });
+
+        searchInput?.addEventListener("input", () => {
+            this.renderRecordedLessons();
+        });
+
+        sortSelect?.addEventListener("change", () => {
+            this.renderRecordedLessons();
+        });
+    }
+
+    renderRecordedLessons() {
+        const container = document.getElementById("media-list-container");
+        if (!container) return;
+
+        const activeCategoryTab = document.querySelector("#media-category-tabs .media-tab.active");
+        const activeStageTab = document.querySelector("#media-stage-tabs .media-tab.active");
+        const categoryFilter = activeCategoryTab ? activeCategoryTab.getAttribute("data-filter") : "all";
+        const stageFilter = activeStageTab ? activeStageTab.getAttribute("data-filter") : "all";
+        const searchQuery = document.getElementById("media-search")?.value.toLowerCase().trim() || "";
+        const sortBy = document.getElementById("media-sort-select")?.value || "order_index";
+
+        container.innerHTML = "";
+
+        let filtered = this.recordedLessons.filter(les => {
+            if (categoryFilter !== "all" && les.category !== categoryFilter) return false;
+            if (stageFilter !== "all" && les.stage !== stageFilter) return false;
+            if (searchQuery) {
+                const titleMatch = les.title.toLowerCase().includes(searchQuery);
+                const descMatch = les.description.toLowerCase().includes(searchQuery);
+                if (!titleMatch && !descMatch) return false;
+            }
+            return true;
+        });
+
+        filtered.sort((a, b) => {
+            if (sortBy === "order_index") {
+                return (parseInt(a.order_index, 10) || 0) - (parseInt(b.order_index, 10) || 0);
+            } else if (sortBy === "created_at") {
+                return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+            }
+            return 0;
+        });
+
+        if (filtered.length === 0) {
+            container.innerHTML = `<p style="text-align: center; color: var(--text-muted); padding: 2rem;">לא נמצאו שיעורים מוקלטים המתאימים לסינונים שבחרת.</p>`;
+            return;
+        }
+
+        const categoryLabels = {
+            relationship: "זוגיות ותקשורת",
+            intimacy: "אינטימיות ומיניות",
+            halacha: "הלכות טהרה",
+            physiology: "פיזיולוגיה וכושר"
+        };
+        const stageLabels = {
+            stage_preparation: "שלב א: לקראת חתונה",
+            stage_wedding: "שלב ב: ליל הכלולות",
+            stage_marriage: "שלב ג: חיי הנישואין"
+        };
+
+        const getYouTubeEmbedUrl = (url) => {
+            let regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+            let match = url.match(regExp);
+            if (match && match[2].length == 11) {
+                return `https://www.youtube.com/embed/${match[2]}`;
+            }
+            return null;
+        };
+
+        filtered.forEach(les => {
+            const card = document.createElement("div");
+            card.className = "card";
+            card.style.marginBottom = "0";
+
+            let mediaHtml = "";
+            if (les.media_type === "video") {
+                const ytUrl = getYouTubeEmbedUrl(les.url);
+                if (ytUrl) {
+                    mediaHtml = `
+                        <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: var(--border-radius-sm); border: 1px solid var(--border-color); margin-bottom: 12px; background: #000;">
+                            <iframe src="${ytUrl}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                        </div>
+                    `;
+                } else {
+                    const fileUrl = les.url.startsWith('http') ? les.url : (les.url.startsWith('media/') ? window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1) + les.url : les.url);
+                    mediaHtml = `
+                        <video controls style="width: 100%; max-height: 380px; border-radius: var(--border-radius-sm); border: 1px solid var(--border-color); margin-bottom: 12px; background: #000;">
+                            <source src="${fileUrl}" type="video/mp4">
+                            הדפדפן שלך אינו תומך בניגון וידאו.
+                        </video>
+                    `;
+                }
+            } else {
+                const fileUrl = les.url.startsWith('http') ? les.url : (les.url.startsWith('media/') ? window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1) + les.url : les.url);
+                mediaHtml = `
+                    <div style="background: var(--bg-card-hover); padding: 12px; border-radius: var(--border-radius-sm); border: 1px solid var(--border-color); margin-bottom: 12px; display: flex; align-items: center; gap: 15px;">
+                        <div style="font-size: 2rem; color: var(--primary);"><i class="fas fa-volume-up"></i></div>
+                        <audio controls style="flex-grow: 1;">
+                            <source src="${fileUrl}">
+                            הדפדפן שלך אינו תומך בניגון שמע.
+                        </audio>
+                    </div>
+                `;
+            }
+
+            card.innerHTML = `
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px;">
+                        <h3 style="margin: 0; font-size: 1.3rem;">${les.title}</h3>
+                        <div style="display: flex; gap: 6px;">
+                            <span class="day-label" style="background-color: var(--primary-dark); color: #fff; font-size: 0.75rem;">${categoryLabels[les.category] || les.category}</span>
+                            <span class="day-label" style="background-color: var(--secondary); color: #fff; font-size: 0.75rem;">${stageLabels[les.stage] || les.stage}</span>
+                        </div>
+                    </div>
+                    <p style="font-size: 0.95rem; color: var(--text-muted); margin: 0 0 10px 0;">${les.description}</p>
+                    ${mediaHtml}
+                </div>
+            `;
+
+            container.appendChild(card);
+        });
+    }
+
+    bindAdminMediaForm() {
+        const btnToggleFile = document.getElementById("btn-toggle-media-file");
+        const btnToggleLink = document.getElementById("btn-toggle-media-link");
+        const fileGroup = document.getElementById("group-media-file");
+        const linkGroup = document.getElementById("group-media-link");
+        
+        let selectedType = "file";
+
+        btnToggleFile?.addEventListener("click", () => {
+            selectedType = "file";
+            btnToggleFile.classList.add("active");
+            btnToggleLink?.classList.remove("active");
+            if (fileGroup) fileGroup.style.display = "block";
+            if (linkGroup) linkGroup.style.display = "none";
+        });
+
+        btnToggleLink?.addEventListener("click", () => {
+            selectedType = "link";
+            btnToggleLink.classList.add("active");
+            btnToggleFile?.classList.remove("active");
+            if (fileGroup) fileGroup.style.display = "none";
+            if (linkGroup) linkGroup.style.display = "block";
+        });
+
+        const btnAdd = document.getElementById("btn-admin-add-media");
+        const spinner = document.getElementById("admin-media-upload-spinner");
+
+        if (btnAdd) {
+            btnAdd.onclick = async () => {
+                const title = document.getElementById("admin-media-title").value.trim();
+                const category = document.getElementById("admin-media-category").value;
+                const stage = document.getElementById("admin-media-stage").value;
+                const mediaType = document.getElementById("admin-media-type").value;
+                const orderIndex = document.getElementById("admin-media-order").value;
+                const description = document.getElementById("admin-media-description").value.trim();
+
+                if (!title || !description) {
+                    alert("אנא מלא את כותרת ותיאור השיעור.");
+                    return;
+                }
+
+                let url = "";
+
+                if (selectedType === "file") {
+                    const fileInput = document.getElementById("admin-media-file");
+                    if (this.isCloudMode) {
+                        if (!fileInput.files || fileInput.files.length === 0) {
+                            alert("אנא בחר קובץ להעלאה.");
+                            return;
+                        }
+                        btnAdd.disabled = true;
+                        if (spinner) spinner.style.display = "inline";
+
+                        try {
+                            url = await HatanSupabase.uploadFile(fileInput.files[0]);
+                        } catch (e) {
+                            console.error(e);
+                            alert("שגיאה בהעלאת הקובץ: " + e.message);
+                            btnAdd.disabled = false;
+                            if (spinner) spinner.style.display = "none";
+                            return;
+                        }
+                    } else {
+                        const filename = document.getElementById("admin-media-filename")?.value.trim() || "";
+                        if (!filename) {
+                            alert("במצב מקומי, אנא הקלד את שם קובץ המדיה השמור בתיקיית הפרויקט.");
+                            return;
+                        }
+                        url = `media/${filename}`;
+                    }
+                } else {
+                    url = document.getElementById("admin-media-url").value.trim();
+                    if (!url) {
+                        alert("אנא הדבק קישור חיצוני למדיה.");
+                        return;
+                    }
+                }
+
+                const payload = {
+                    title,
+                    category,
+                    stage,
+                    media_type: mediaType,
+                    url,
+                    order_index: orderIndex,
+                    description
+                };
+
+                try {
+                    if (this.isCloudMode) {
+                        await HatanSupabase.saveRecordedLesson(payload);
+                        this.recordedLessons = await HatanSupabase.fetchRecordedLessons();
+                    } else {
+                        payload.id = "custom_" + Date.now();
+                        this.customRecordedLessons.push(payload);
+                        this.saveCustomRecordedLessons();
+                    }
+
+                    alert("השיעור המוקלט נוסף בהצלחה!");
+                    
+                    document.getElementById("admin-media-title").value = "";
+                    document.getElementById("admin-media-description").value = "";
+                    document.getElementById("admin-media-url").value = "";
+                    if (document.getElementById("admin-media-file")) document.getElementById("admin-media-file").value = "";
+                    
+                    this.renderRecordedLessons();
+                    this.renderAdminRecordedLessons();
+                } catch (e) {
+                    console.error(e);
+                    alert("שגיאה בשמירת השיעור: " + e.message);
+                } finally {
+                    btnAdd.disabled = false;
+                    if (spinner) spinner.style.display = "none";
+                }
+            };
+        }
+    }
+
+    renderAdminRecordedLessons() {
+        const container = document.getElementById("admin-media-list");
+        if (!container) return;
+
+        container.innerHTML = "";
+
+        if (this.recordedLessons.length === 0) {
+            container.innerHTML = `<p style="text-align: center; color: var(--text-muted); padding: 1rem;">אין שיעורים מוקלטים כרגע.</p>`;
+            return;
+        }
+
+        const categoryLabels = {
+            relationship: "זוגיות ותקשורת",
+            intimacy: "אינטימיות ומיניות",
+            halacha: "הלכות טהרה",
+            physiology: "פיזיולוגיה וכושר"
+        };
+
+        this.recordedLessons.forEach(les => {
+            const row = document.createElement("div");
+            row.className = "admin-item-row";
+            row.style.border = "1px solid var(--border-color)";
+            row.style.background = "var(--bg-main)";
+            row.style.padding = "12px 16px";
+            row.style.borderRadius = "8px";
+            row.style.marginBottom = "10px";
+            row.style.display = "flex";
+            row.style.justifyContent = "space-between";
+            row.style.alignItems = "center";
+            row.style.flexWrap = "wrap";
+            row.style.gap = "10px";
+
+           row.innerHTML = `
+               <div>
+                   <strong style="font-size: 1.05rem;">${les.title}</strong>
+                   <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">
+                       <span>סוג: ${les.media_type === 'video' ? 'וידאו' : 'שמע'}</span> | 
+                       <span>מיקום: ${les.order_index}</span> | 
+                       <span>נושא: ${categoryLabels[les.category] || les.category}</span>
+                   </div>
+               </div>
+               <div style="display: flex; gap: 8px;">
+                   <button class="btn btn-secondary btn-delete-media" data-id="${les.id}" style="padding: 6px 12px; font-size: 0.8rem; color: var(--error); border-color: rgba(198, 40, 40, 0.2); background: rgba(198, 40, 40, 0.05);"><i class="fas fa-trash-alt"></i> מחק</button>
+               </div>
+           `;
+
+            row.querySelector(".btn-delete-media").onclick = async () => {
+                if (confirm(`האם אתה בטוח שברצונך למחוק את השיעור "${les.title}"?`)) {
+                    try {
+                        if (this.isCloudMode) {
+                            await HatanSupabase.deleteRecordedLesson(les.id);
+                            this.recordedLessons = await HatanSupabase.fetchRecordedLessons();
+                        } else {
+                            this.customRecordedLessons = this.customRecordedLessons.filter(l => l.id !== les.id);
+                            this.saveCustomRecordedLessons();
+                        }
+                        this.renderRecordedLessons();
+                        this.renderAdminRecordedLessons();
+                        alert("השיעור נמחק בהצלחה.");
+                    } catch (e) {
+                        console.error(e);
+                        alert("שגיאה במחיקת השיעור: " + e.message);
+                    }
+                }
+            };
+
+            container.appendChild(row);
+        });
+    }
 
 // Initialize Application on DOM Content Loaded
 let app;

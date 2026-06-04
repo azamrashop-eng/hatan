@@ -1398,4 +1398,54 @@ p {
     line-height: 1.5;
 }
 
+/* VOD Media Tabs & Filters */
+.media-tabs {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.media-tab {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    padding: 6px 16px;
+    border-radius: 30px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all var(--transition-speed);
+}
+
+.media-tab:hover {
+    border-color: var(--primary);
+    background-color: var(--bg-card-hover);
+    color: var(--primary-dark);
+}
+
+.media-tab.active {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: var(--bg-main) !important;
+    border-color: var(--primary) !important;
+    box-shadow: 0 4px 10px rgba(197, 168, 128, 0.3);
+}
+
+[data-theme="dark"] .media-tab.active,
+[data-theme="warm"] .media-tab.active {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: var(--bg-main) !important;
+    border-color: var(--primary) !important;
+}
+
+/* Media Players Style Customization */
+video:focus, audio:focus {
+    outline: none;
+}
+
+iframe {
+    border-radius: var(--border-radius-sm);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+}
+
+
 

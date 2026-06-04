@@ -85,6 +85,12 @@
                             <span>ספריית מדריכים (PDF)</span>
                         </button>
                     </li>
+                    <li>
+                        <button class="nav-item-btn" data-section="section-recorded-lessons" id="nav-btn-recorded-lessons">
+                            <i class="fas fa-video"></i>
+                            <span>שיעורים מוקלטים</span>
+                        </button>
+                    </li>
                 </ul>
 
                 <span class="nav-section-title font-small">עזרים אישיים</span>
@@ -510,6 +516,63 @@
                 </div>
             </section>
 
+            <!-- SECTION RECORDED LESSONS: VIDEO & AUDIO VOD -->
+            <section id="section-recorded-lessons" class="content-section">
+                <div class="card">
+                    <h1>ספריית שיעורים מוקלטים ומדיה (VOD)</h1>
+                    <p>לפניך שיעורי וידאו מוקלטים והקלטות שמע המסודרים לפי נושאים ושלבי התקדמות זוגיים. בחר את נושא השיעור או שלב הלמידה כדי לסנן את התכנים.</p>
+                </div>
+
+                <!-- Filters & Search Panel -->
+                <div class="card" style="padding: 1.5rem; margin-bottom: 2rem;">
+                    <div style="display: flex; flex-direction: column; gap: 15px;">
+                        
+                        <!-- Filter Row 1: Topics -->
+                        <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+                            <span style="font-weight: 700; min-width: 100px; color: var(--text-muted);">סנן לפי נושא:</span>
+                            <div class="media-tabs" id="media-category-tabs" style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                <button class="media-tab active" data-filter="all">הכל</button>
+                                <button class="media-tab" data-filter="relationship">זוגיות ותקשורת</button>
+                                <button class="media-tab" data-filter="intimacy">אינטימיות ומיניות</button>
+                                <button class="media-tab" data-filter="halacha">הלכות טהרה</button>
+                                <button class="media-tab" data-filter="physiology">פיזיולוגיה וכושר</button>
+                            </div>
+                        </div>
+
+                        <!-- Filter Row 2: Stages -->
+                        <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 5px; border-top: 1px solid var(--border-color); padding-top: 12px;">
+                            <span style="font-weight: 700; min-width: 100px; color: var(--text-muted);">סנן לפי שלב:</span>
+                            <div class="media-tabs" id="media-stage-tabs" style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                <button class="media-tab active" data-filter="all">הכל</button>
+                                <button class="media-tab" data-filter="stage_preparation">שלב א: לקראת חתונה</button>
+                                <button class="media-tab" data-filter="stage_wedding">שלב ב: ליל הכלולות</button>
+                                <button class="media-tab" data-filter="stage_marriage">שלב ג: חיי הנישואין</button>
+                            </div>
+                        </div>
+
+                        <!-- Search and Sort -->
+                        <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-top: 5px; border-top: 1px solid var(--border-color); padding-top: 12px;">
+                            <div class="search-wrapper" style="flex: 2; margin: 0; min-width: 250px;">
+                                <input type="text" id="media-search" class="search-input" placeholder="חיפוש לפי כותרת או תיאור השיעור...">
+                            </div>
+                            <div style="flex: 1; min-width: 150px; display: flex; align-items: center; gap: 8px;">
+                                <span style="font-weight: 700; color: var(--text-muted); white-space: nowrap;">סדר לפי:</span>
+                                <select id="media-sort-select" class="form-input" style="padding: 8px 12px; margin: 0;">
+                                    <option value="order_index">סדר שיעורים (מומלץ)</option>
+                                    <option value="created_at">תאריך העלאה</option>
+                                </select>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Media List Container -->
+                <div id="media-list-container" style="display: grid; grid-template-columns: 1fr; gap: 2rem;">
+                    <!-- Rendered dynamically by JS -->
+                </div>
+            </section>
+
             <!-- SECTION 9: ADMIN PANEL -->
             <section id="section-admin" class="content-section">
                 <!-- Warning Banner if Supabase not configured -->
@@ -636,6 +699,95 @@
                         
                         <div id="admin-booklets-list" style="display: flex; flex-direction: column; gap: 1rem; margin-top: 1.5rem;">
                             <!-- Dynamically loaded list of booklets with edit/delete inputs -->
+                        </div>
+                    </div>
+
+                    <!-- Recorded Lessons Manager Card (Admin only) -->
+                    <div class="card">
+                        <h2><i class="fas fa-video" style="color: var(--primary);"></i> העלאת שיעור מוקלט (וידאו / שמע) חדש</h2>
+                        
+                        <div class="dashboard-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label for="admin-media-title">שם תצוגה של השיעור:</label>
+                                <input type="text" id="admin-media-title" class="form-input" placeholder="למשל: שיעור 1 - הכנה רגשית לקשר">
+                            </div>
+                            
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label for="admin-media-category">נושא השיעור:</label>
+                                <select id="admin-media-category" class="form-input">
+                                    <option value="relationship">זוגיות ותקשורת</option>
+                                    <option value="intimacy">אינטימיות ומיניות</option>
+                                    <option value="halacha">הלכות טהרה</option>
+                                    <option value="physiology">פיזיולוגיה וכושר</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label for="admin-media-stage">שלב בלמידה:</label>
+                                <select id="admin-media-stage" class="form-input">
+                                    <option value="stage_preparation">שלב א: לקראת חתונה</option>
+                                    <option value="stage_wedding">שלב ב: ליל הכלולות</option>
+                                    <option value="stage_marriage">שלב ג: חיי הנישואין</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="dashboard-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label for="admin-media-type">סוג קובץ המדיה:</label>
+                                <select id="admin-media-type" class="form-input">
+                                    <option value="video">סרטון וידאו (MP4 / יוטיוב)</option>
+                                    <option value="audio">הקלטת שמע (MP3 / קול)</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label for="admin-media-order">מספר סדר תצוגה (מיקום):</label>
+                                <input type="number" id="admin-media-order" class="form-input" placeholder="למשל 1, 2..." value="1">
+                            </div>
+
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label>שיטת העלאת המדיה:</label>
+                                <div style="display: flex; gap: 10px; margin-top: 5px;">
+                                    <button type="button" class="btn btn-secondary active" id="btn-toggle-media-file" style="flex: 1; font-size: 0.85rem; padding: 6px 10px;">העלאת קובץ מדיה</button>
+                                    <button type="button" class="btn btn-secondary" id="btn-toggle-media-link" style="flex: 1; font-size: 0.85rem; padding: 6px 10px;">קישור חיצוני (YouTube/Drive)</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="dashboard-grid" style="grid-template-columns: 1fr; gap: 1rem; margin-bottom: 1rem;">
+                            <!-- File input -->
+                            <div class="form-group" id="group-media-file" style="margin-bottom: 0;">
+                                <label for="admin-media-file">בחר קובץ להעלאה (וידאו/שמע):</label>
+                                <input type="file" id="admin-media-file" class="form-input" accept="audio/*,video/*">
+                                <input type="text" id="admin-media-filename" class="form-input" placeholder="שם הקובץ המקומי (למשל les1.mp3)" style="display: none; margin-top: 5px;">
+                            </div>
+
+                            <!-- Link input -->
+                            <div class="form-group" id="group-media-link" style="display: none; margin-bottom: 0;">
+                                <label for="admin-media-url">כתובת קישור חיצוני למדיה (URL):</label>
+                                <input type="text" id="admin-media-url" class="form-input" placeholder="למשל: https://www.youtube.com/watch?v=... או קישור גוגל דרייב">
+                            </div>
+                        </div>
+
+                        <div class="form-group" style="margin-top: 1rem;">
+                            <label for="admin-media-description">תיאור ופירוט על תוכן השיעור:</label>
+                            <textarea id="admin-media-description" class="form-input" style="height: 90px; font-size: 0.95rem;" placeholder="כתוב כאן תיאור קצר שיסביר לחתן מה נלמד בשיעור המוקלט הזה..."></textarea>
+                        </div>
+
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <button class="btn" id="btn-admin-add-media"><i class="fas fa-plus"></i> הוסף שיעור מוקלט</button>
+                            <span id="admin-media-upload-spinner" style="display: none; font-weight: 700; color: var(--primary);"><i class="fas fa-spinner fa-spin"></i> מעלה קובץ לענן, אנא המתן...</span>
+                        </div>
+                    </div>
+
+                    <!-- Manage and Edit Recorded Lessons -->
+                    <div class="card">
+                        <h2><i class="fas fa-edit" style="color: var(--primary);"></i> עריכה וניהול של שיעורים מוקלטים</h2>
+                        <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1rem;">לפניך רשימת כל השיעורים המוקלטים במערכת. באפשרותך לערוך את תיאורי השיעורים, לשנות את סדר התצוגה או למחוק שיעורים.</p>
+                        
+                        <div id="admin-media-list" style="display: flex; flex-direction: column; gap: 1rem; margin-top: 1.5rem;">
+                            <!-- Dynamically loaded list of recorded lessons -->
                         </div>
                     </div>
                 </div>
