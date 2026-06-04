@@ -1387,7 +1387,6 @@ class HatanApp {
             page_path: '/section-dashboard'
         });
     }
-}
 
     // --- Recorded Lessons System ---
     loadCustomRecordedLessons() {
@@ -1736,6 +1735,7 @@ class HatanApp {
             container.appendChild(row);
         });
     }
+}
 
 // Initialize Application on DOM Content Loaded
 let app;
