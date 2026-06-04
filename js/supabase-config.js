@@ -5,6 +5,9 @@
 const SUPABASE_URL = "https://qafevdjthuyjmewghwqb.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_TZdXswS06lFs5fWd7U3jNw_x5x0lJmL";
 
+// מזהה מעקב של Google Analytics (GA4) - למשל G-XXXXXXXXXX
+const GOOGLE_ANALYTICS_ID = "YOUR_GOOGLE_ANALYTICS_ID";
+
 // SQL להרצה ב-SQL Editor של Supabase להקמת הטבלאות ושרת הקבצים:
 /*
 -- 1. יצירת טבלת חוברות
@@ -209,3 +212,4 @@ const HatanSupabase = {
 };
 
 window.HatanSupabase = HatanSupabase;
+window.GOOGLE_ANALYTICS_ID = GOOGLE_ANALYTICS_ID;

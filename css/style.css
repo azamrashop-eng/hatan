@@ -1317,3 +1317,85 @@ p {
     color: #000000 !important;
 }
 
+/* AI Chat Specific Elements */
+.ai-chips-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.ai-chip {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-speed);
+}
+
+.ai-chip:hover {
+    border-color: var(--primary);
+    background-color: var(--bg-card-hover);
+    color: var(--primary-dark);
+    transform: translateY(-1px);
+}
+
+.chat-message.error-message {
+    align-self: center;
+    background-color: rgba(198, 40, 40, 0.08);
+    border: 1px solid var(--error);
+    color: var(--error);
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+/* Typing Indicator Animation */
+.typing-indicator {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+}
+
+.typing-indicator span {
+    width: 6px;
+    height: 6px;
+    background-color: var(--text-muted);
+    border-radius: 50%;
+    display: inline-block;
+    animation: typingBounce 1.4s infinite ease-in-out both;
+}
+
+.typing-indicator span:nth-child(1) {
+    animation-delay: -0.32s;
+}
+
+.typing-indicator span:nth-child(2) {
+    animation-delay: -0.16s;
+}
+
+@keyframes typingBounce {
+    0%, 80%, 100% { 
+        transform: scale(0);
+    } 40% { 
+        transform: scale(1.0);
+    }
+}
+
+/* Format bot lists nicely */
+.chat-message.bot ul, 
+.chat-message.bot ol {
+    margin: 8px 16px 8px 0;
+    padding: 0;
+}
+
+.chat-message.bot li {
+    margin-bottom: 6px;
+    line-height: 1.5;
+}
+
+

@@ -6,6 +6,7 @@ class HatanApp {
         this.completedLessons = this.loadProgress();
         this.calendar = new HatanCalendar();
         this.simulator = new HatanSimulator();
+        this.ai = new HatanAi(this);
         
         // Checklist initial items
         this.checklists = this.loadChecklists();
@@ -45,6 +46,7 @@ class HatanApp {
         // Initialize Simulator & QA
         this.simulator.init('sim-chat-box', 'sim-options-panel', 'faq-list-container');
         this.initQA();
+        this.initAi();
 
         // Initialize Checklists
         this.initChecklists();
@@ -114,6 +116,8 @@ class HatanApp {
                     this.simulator.resetRoleplay();
                 } else if (targetSectionId === 'section-library') {
                     this.renderLibrary();
+                } else if (targetSectionId === 'section-ai') {
+                    this.scrollToBottom('ai-chat-box');
                 } else if (targetSectionId === 'section-admin') {
                     this.initAdmin();
                 }
@@ -409,6 +413,115 @@ class HatanApp {
         customInput?.addEventListener("keypress", (e) => {
             if (e.key === "Enter") submitQuestion();
         });
+    }
+
+    // --- AI Assistant Panel ---
+    initAi() {
+        const inputEl = document.getElementById("ai-chat-input");
+        const btnSend = document.getElementById("btn-send-ai-message");
+        const chatBox = document.getElementById("ai-chat-box");
+        const btnSettings = document.getElementById("btn-ai-settings");
+        const settingsBox = document.getElementById("ai-settings-box");
+        const apiKeyInput = document.getElementById("ai-api-key-input");
+        const btnSaveSettings = document.getElementById("btn-save-ai-settings");
+        const btnCancelSettings = document.getElementById("btn-cancel-ai-settings");
+
+        // Load existing API Key into input
+        if (apiKeyInput) {
+            apiKeyInput.value = this.ai.getApiKey();
+        }
+
+        // Toggle Settings
+        btnSettings?.addEventListener("click", () => {
+            if (settingsBox) {
+                const isHidden = settingsBox.style.display === "none";
+                settingsBox.style.display = isHidden ? "block" : "none";
+            }
+        });
+
+        btnCancelSettings?.addEventListener("click", () => {
+            if (settingsBox) settingsBox.style.display = "none";
+        });
+
+        // Save Settings
+        btnSaveSettings?.addEventListener("click", () => {
+            const keyVal = apiKeyInput.value.trim();
+            this.ai.setApiKey(keyVal);
+            alert("הגדרות מפתח ה-API עודכנו בהצלחה!");
+            if (settingsBox) settingsBox.style.display = "none";
+        });
+
+        // Send message function
+        const sendMessage = async () => {
+            const text = inputEl.value.trim();
+            if (!text) return;
+
+            // Clear input
+            inputEl.value = "";
+
+            // Render user message
+            this.appendChatMessage(chatBox, 'user', text);
+            this.scrollToBottom('ai-chat-box');
+
+            // Render thinking state
+            const thinkingEl = this.appendChatMessage(chatBox, 'bot thinking-message', `
+                <div class="typing-indicator">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            `);
+            this.scrollToBottom('ai-chat-box');
+
+            try {
+                // Call AI Engine
+                const response = await this.ai.ask(text);
+                
+                // Remove thinking indicator
+                thinkingEl?.remove();
+
+                // Render bot response
+                this.appendChatMessage(chatBox, 'bot', response);
+                this.scrollToBottom('ai-chat-box');
+            } catch (e) {
+                console.error(e);
+                thinkingEl?.remove();
+                this.appendChatMessage(chatBox, 'bot error-message', 'התרחשה שגיאה בעת ניסיון לפנות לעוזר ה-AI. אנא נסה שוב מאוחר יותר.');
+                this.scrollToBottom('ai-chat-box');
+            }
+        };
+
+        btnSend?.addEventListener("click", sendMessage);
+        inputEl?.addEventListener("keypress", (e) => {
+            if (e.key === "Enter") sendMessage();
+        });
+
+        // Prompt Chips bindings
+        document.querySelectorAll(".ai-chip").forEach(chip => {
+            chip.addEventListener("click", () => {
+                const prompt = chip.getAttribute("data-prompt");
+                if (inputEl) {
+                    inputEl.value = prompt;
+                    sendMessage();
+                }
+            });
+        });
+    }
+
+    appendChatMessage(container, role, text) {
+        if (!container) return null;
+        const msgDiv = document.createElement("div");
+        msgDiv.className = `chat-message ${role}`;
+        msgDiv.innerHTML = text;
+        container.appendChild(msgDiv);
+        return msgDiv;
+    }
+
+    scrollToBottom(elementId) {
+        const el = document.getElementById(elementId);
+        if (el) {
+            el.scrollTop = el.scrollHeight;
+        }
     }
 
     // --- Cloud Mode Initialization ---

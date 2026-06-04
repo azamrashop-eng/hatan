@@ -102,6 +102,12 @@
                         </button>
                     </li>
                     <li>
+                        <button class="nav-item-btn" data-section="section-ai" id="nav-btn-ai">
+                            <i class="fas fa-robot"></i>
+                            <span>עוזר AI אישי</span>
+                        </button>
+                    </li>
+                    <li>
                         <button class="nav-item-btn" data-section="section-admin" id="nav-btn-admin">
                             <i class="fas fa-user-cog"></i>
                             <span>ניהול מערכת (מנהל)</span>
@@ -255,8 +261,14 @@
                 <div class="calendar-layout">
                     <!-- Control Form -->
                     <div class="calendar-control-panel">
-                        <h3>הזנת נתוני מחזור</h3>
+                        <h3>הזנת נתוני מחזור וטהרה</h3>
                         <div style="margin-top: 15px;">
+                            
+                            <!-- Tab 1: Purity & Clean Days -->
+                            <div style="border-bottom: 2px solid var(--border-color); padding-bottom: 8px; margin-bottom: 15px; font-weight: 700; color: var(--primary-dark);">
+                                <i class="fas fa-water"></i> שבעה נקיים ומקווה
+                            </div>
+                            
                             <div class="form-group">
                                 <label for="hefsek-date-input">תאריך בדיקת הפסק הטהרה:</label>
                                 <input type="date" id="hefsek-date-input" class="form-input">
@@ -269,10 +281,39 @@
                                     <option value="after">אחרי שקיעת החמה (נחשב כיום המחרת)</option>
                                 </select>
                             </div>
+                            
+                            <!-- Tab 2: Separation & Vests -->
+                            <div style="border-bottom: 2px solid var(--border-color); padding-bottom: 8px; margin-top: 20px; margin-bottom: 15px; font-weight: 700; color: var(--primary-dark);">
+                                <i class="fas fa-calendar-times"></i> חישוב עונות פרישה (ווסת)
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="vest-date-input">תאריך תחילת הווסת (ראיית דם):</label>
+                                <input type="date" id="vest-date-input" class="form-input">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="vest-time-select">עונת הראייה (יום / לילה):</label>
+                                <select id="vest-time-select" class="form-input">
+                                    <option value="night">בלילה (מהשקיעה עד הנץ החמה)</option>
+                                    <option value="day">ביום (מהנץ החמה עד השקיעה)</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="vest-interval-input">ימי הפלגה קודמת (הפרש בימים):</label>
+                                <input type="number" id="vest-interval-input" class="form-input" placeholder="למשל 28 (ריק אם אין)">
+                            </div>
+                            
+                            <!-- Notification Request -->
+                            <div style="margin-top: 20px; padding: 12px; background: rgba(197, 168, 128, 0.08); border: 1px solid var(--primary); border-radius: 8px; text-align: center;">
+                                <p style="font-size: 0.85rem; margin-bottom: 8px; font-weight: 700; color: var(--text-main);"><i class="fas fa-bell"></i> התראות על בדיקות ועונות פרישה</p>
+                                <button class="btn" id="btn-request-notifications" style="font-size: 0.8rem; padding: 6px 12px; margin: 0 auto; width: 100%; justify-content: center;"><i class="fas fa-bell-slash"></i> הפעל התראות בדפדפן</button>
+                            </div>
 
                             <div style="display: flex; gap: 10px; margin-top: 20px;">
-                                <button class="btn" id="btn-save-hefsek" style="flex: 1;"><i class="fas fa-calculator"></i> חשב לוח</button>
-                                <button class="btn btn-secondary" id="btn-clear-hefsek"><i class="fas fa-trash-alt"></i> איפוס</button>
+                                <button class="btn" id="btn-save-hefsek" style="flex: 2;"><i class="fas fa-calculator"></i> חשב לוח ועונות</button>
+                                <button class="btn btn-secondary" id="btn-clear-hefsek" style="flex: 1;"><i class="fas fa-trash-alt"></i> איפוס</button>
                             </div>
                         </div>
                         
@@ -384,6 +425,65 @@
                         <span id="journal-save-status" style="color: var(--success); font-weight: 700; display: none;">
                             <i class="fas fa-check"></i> נשמר בהצלחה במחשב!
                         </span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION AI: DIGITAL ASSISTANT -->
+            <section id="section-ai" class="content-section">
+                <div class="card" style="background: linear-gradient(135deg, var(--bg-card) 60%, rgba(197, 168, 128, 0.05) 100%);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+                        <div>
+                            <h1 style="margin-bottom: 5px;"><i class="fas fa-robot" style="color: var(--primary);"></i> עוזר AI אישי - זוגיות ואינטימיות</h1>
+                            <p style="font-size: 0.95rem; margin-bottom: 0;">שאל כל שאלה בנושאי תקשורת, שלום בית, אינטימיות ומיניות. כל השיחה פרטית ומאובטחת לחלוטין.</p>
+                        </div>
+                        <button class="btn btn-secondary" id="btn-ai-settings" title="הגדרות חיבור לענן" style="padding: 8px 12px;"><i class="fas fa-cog"></i> הגדרות</button>
+                    </div>
+                </div>
+
+                <!-- Settings Box (hidden by default) -->
+                <div class="card" id="ai-settings-box" style="display: none; border-color: var(--primary); background-color: var(--bg-card-hover);">
+                    <h3><i class="fas fa-plug"></i> חיבור למודל ענן מתקדם (Gemini API)</h3>
+                    <p style="font-size: 0.9rem; color: var(--text-muted);">כברירת מחדל, העוזר עובד במצב **מקומי ודיסקרטי** ומשיב מתוך מאגר השיעורים והחוברות שאתה מעלה. להפעלת בינה מלאכותית פתוחה ויוצרת, תוכל להזין מפתח API אישי של Google Gemini:</p>
+                    <div class="form-group" style="margin-top: 10px;">
+                        <label for="ai-api-key-input">Gemini API Key:</label>
+                        <input type="password" id="ai-api-key-input" class="form-input" placeholder="הזן מפתח AI (למשל AIzaSy...)" style="font-family: monospace;">
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn" id="btn-save-ai-settings" style="font-size: 0.85rem; padding: 6px 12px;"><i class="fas fa-check"></i> שמור מפתח</button>
+                        <button class="btn btn-secondary" id="btn-cancel-ai-settings" style="font-size: 0.85rem; padding: 6px 12px;">סגור</button>
+                    </div>
+                </div>
+
+                <!-- Chat Box Card -->
+                <div class="card" style="max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 1rem;">
+                    <!-- Prompt Suggestion Chips -->
+                    <div style="display: flex; flex-direction: column; gap: 6px;">
+                        <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted);">הצעות לשאלות מהירות:</span>
+                        <div class="ai-chips-wrapper" style="display: flex; flex-wrap: wrap; gap: 8px;">
+                            <button class="ai-chip" data-prompt="כואב לה בלילה הראשון - מה לעשות?">כואב לה בלילה הראשון</button>
+                            <button class="ai-chip" data-prompt="אני מרגיש חרדה ולחץ בלילה הראשון, מה עושים?">חרדת ביצוע אצל החתן</button>
+                            <button class="ai-chip" data-prompt="האם מותר להשתמש בחומר סיכוך ואיזה סוג מומלץ הלכתית?">שימוש בחומרי סיכוך</button>
+                            <button class="ai-chip" data-prompt="איך לנהל תקשורת נכונה וויכוחים בשלום בית?">תקשורת בריאה בזמן ויכוח</button>
+                            <button class="ai-chip" data-prompt="איך להתמודד עם פערים בחשק המיני בינינו?">פערים בחשק הזוגי</button>
+                        </div>
+                    </div>
+
+                    <!-- Chat Log Display -->
+                    <div class="chat-box" id="ai-chat-box" style="height: 380px;">
+                        <div class="chat-message bot">
+                            שלום חתן יקר! אני עוזר ה-AI האישי שלך לנושאי זוגיות, שלום בית, אינטימיות והלכות טהרה.
+                            <br><br>
+                            כל שאלה שאתה מקליד כאן נשמרת באופן דיסקרטי על המחשב שלך בלבד. במצב ברירת המחדל אני משיב מתוך **שיעורי האתר והחוברות שהעלית**.
+                            <br><br>
+                            במה אוכל לסייע לך היום?
+                        </div>
+                    </div>
+
+                    <!-- Input Bar -->
+                    <div class="search-wrapper" style="margin-top: 10px;">
+                        <input type="text" id="ai-chat-input" class="search-input" placeholder="שאל אותי משהו (למשל: איך להרגיע אותה אם היא חוששת?)...">
+                        <button class="btn" id="btn-send-ai-message"><i class="fas fa-paper-plane"></i> שלח</button>
                     </div>
                 </div>
             </section>
@@ -576,6 +676,7 @@
     <script src="js/booklets.js?v=1.0.5"></script>
     <script src="js/calendar.js?v=1.0.5"></script>
     <script src="js/simulator.js?v=1.0.5"></script>
+    <script src="js/ai.js?v=1.0.5"></script>
     <script src="js/app.js?v=1.0.5"></script>
 </body>
 </html>
