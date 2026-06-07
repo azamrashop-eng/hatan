@@ -19,6 +19,7 @@ CREATE TABLE booklets (
     description TEXT NOT NULL,
     url TEXT NOT NULL,
     is_external BOOLEAN DEFAULT false,
+    is_hidden BOOLEAN DEFAULT false,
     created_by UUID,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
@@ -151,6 +152,7 @@ const HatanSupabase = {
             description: booklet.description,
             url: booklet.url,
             is_external: booklet.is_external,
+            is_hidden: booklet.is_hidden || false,
             created_by: user ? user.id : null
         };
 

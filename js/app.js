@@ -589,8 +589,14 @@ class HatanApp {
                     // Show default booklets locally for guests if cloud database is empty
                     const list = JSON.parse(JSON.stringify(DEFAULT_BOOKLETS));
                     list.forEach(bk => {
-                        if (this.bookletOverrides[bk.id]) {
-                            bk.description = this.bookletOverrides[bk.id];
+                        const override = this.bookletOverrides[bk.id];
+                        if (override) {
+                            if (typeof override === "string") {
+                                bk.description = override;
+                            } else {
+                                if (override.description !== undefined) bk.description = override.description;
+                                if (override.is_hidden !== undefined) bk.is_hidden = override.is_hidden;
+                            }
                         }
                     });
                     this.booklets = list;
@@ -704,8 +710,14 @@ class HatanApp {
         const list = JSON.parse(JSON.stringify(DEFAULT_BOOKLETS));
         
         list.forEach(bk => {
-            if (this.bookletOverrides[bk.id]) {
-                bk.description = this.bookletOverrides[bk.id];
+            const override = this.bookletOverrides[bk.id];
+            if (override) {
+                if (typeof override === "string") {
+                    bk.description = override;
+                } else {
+                    if (override.description !== undefined) bk.description = override.description;
+                    if (override.is_hidden !== undefined) bk.is_hidden = override.is_hidden;
+                }
             }
         });
 
@@ -733,7 +745,9 @@ class HatanApp {
         };
         const baseUrl = getBaseUrl();
 
-        this.booklets.forEach(bk => {
+        const visibleBooklets = this.booklets.filter(bk => !bk.is_hidden);
+
+        visibleBooklets.forEach(bk => {
             const card = document.createElement("div");
             card.className = "card";
             card.style.marginBottom = "0";
@@ -1032,6 +1046,7 @@ class HatanApp {
             const category = document.getElementById("admin-booklet-category").value;
             const size = document.getElementById("admin-booklet-size").value.trim();
             const description = document.getElementById("admin-booklet-description").value.trim();
+            const isHidden = document.getElementById("admin-booklet-is-hidden")?.checked || false;
             const spinner = document.getElementById("admin-upload-spinner");
 
             if (!title || !description) {
@@ -1079,7 +1094,8 @@ class HatanApp {
                         size: size || "1.0 MB",
                         description,
                         url: fileUrl,
-                        is_external: isExternal
+                        is_external: isExternal,
+                        is_hidden: isHidden
                     };
                     await HatanSupabase.saveBooklet(newBk);
                     alert("החוברת הועלתה ונשמרה בענן בהצלחה!");
@@ -1104,7 +1120,8 @@ class HatanApp {
                     filename: filename,
                     category: category,
                     size: size || "1.0 MB",
-                    description: description
+                    description: description,
+                    is_hidden: isHidden
                 };
 
                 this.customBooklets.push(newBk);
@@ -1119,6 +1136,8 @@ class HatanApp {
             if (document.getElementById("admin-booklet-file")) document.getElementById("admin-booklet-file").value = "";
             if (document.getElementById("admin-booklet-url")) document.getElementById("admin-booklet-url").value = "";
             if (document.getElementById("admin-booklet-filename")) document.getElementById("admin-booklet-filename").value = "";
+            const isHiddenCheckbox = document.getElementById("admin-booklet-is-hidden");
+            if (isHiddenCheckbox) isHiddenCheckbox.checked = false;
 
             if (this.isCloudMode) {
                 this.booklets = await HatanSupabase.fetchBooklets();
@@ -1144,14 +1163,22 @@ class HatanApp {
             row.style.gap = "8px";
 
             const isCustom = this.isCloudMode ? (bk.id && !String(bk.id).startsWith("foundations_") && !String(bk.id).startsWith("sacred_") && !String(bk.id).startsWith("intimacy_") && !String(bk.id).startsWith("total_") && !String(bk.id).startsWith("sex_") && !String(bk.id).startsWith("stamina_") && !String(bk.id).startsWith("cum_") && !String(bk.id).startsWith("screaming_") && !String(bk.id).startsWith("ultimate_")) : bk.id.startsWith("custom_");
+            const isHidden = bk.is_hidden || false;
 
             row.innerHTML = `
-                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed var(--border-color); padding-bottom: 8px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed var(--border-color); padding-bottom: 8px; flex-wrap: wrap; gap: 8px;">
                     <div>
                         <strong style="color: var(--secondary); font-size: 1.05rem;">${bk.title}</strong>
                         <span style="font-size: 0.8rem; color: var(--text-muted); margin-right: 10px;">קטגוריה: ${bk.category === 'jewish_purity' ? 'הלכה ורגש' : 'סיבולת/טכניקה'}</span>
+                        ${isHidden ? `<span style="background-color: var(--warning, #e65100); color: #fff; font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; font-weight: 600; margin-right: 8px; display: inline-block;"><i class="fas fa-eye-slash"></i> מוסתר מהתלמידים</span>` : `<span style="background-color: rgba(76, 175, 80, 0.1); color: var(--success, #2e7d32); font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; font-weight: 600; margin-right: 8px; display: inline-block;"><i class="fas fa-eye"></i> מוצג לתלמידים</span>`}
                     </div>
-                    ${isCustom ? `<button class="btn btn-secondary btn-delete-custom" data-id="${bk.id}" style="padding: 4px 10px; font-size: 0.8rem; background-color: rgba(198, 40, 40, 0.1); color: var(--error); border-color: rgba(198, 40, 40, 0.2);"><i class="fas fa-trash-alt"></i> מחק חוברת</button>` : `<span style="font-size: 0.8rem; color: var(--primary-dark); font-weight: 700;">חוברת מערכת</span>`}
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <button class="btn btn-secondary btn-toggle-visibility" data-id="${bk.id}" style="padding: 4px 10px; font-size: 0.8rem; background-color: ${isHidden ? 'rgba(76, 175, 80, 0.1)' : 'rgba(230, 81, 0, 0.1)'}; color: ${isHidden ? 'var(--success, #2e7d32)' : 'var(--warning, #e65100)'}; border-color: ${isHidden ? 'rgba(76, 175, 80, 0.2)' : 'rgba(230, 81, 0, 0.2)'};">
+                            <i class="fas ${isHidden ? 'fa-eye' : 'fa-eye-slash'}"></i> 
+                            ${isHidden ? 'בטל הסתרה' : 'הסתר חוברת'}
+                        </button>
+                        ${isCustom ? `<button class="btn btn-secondary btn-delete-custom" data-id="${bk.id}" style="padding: 4px 10px; font-size: 0.8rem; background-color: rgba(198, 40, 40, 0.1); color: var(--error); border-color: rgba(198, 40, 40, 0.2);"><i class="fas fa-trash-alt"></i> מחק חוברת</button>` : `<span style="font-size: 0.8rem; color: var(--primary-dark); font-weight: 700;">חוברת מערכת</span>`}
+                    </div>
                 </div>
                 <div class="form-group" style="margin-bottom: 0;">
                     <label style="font-size: 0.85rem; font-weight: 600;">תיאור הסבר המוצג לחתן (ניתן לערוך):</label>
@@ -1161,6 +1188,45 @@ class HatanApp {
                     <button class="btn btn-save-desc" data-id="${bk.id}" style="padding: 4px 14px; font-size: 0.85rem;"><i class="fas fa-save"></i> שמור שינויים בטקסט</button>
                 </div>
             `;
+
+            row.querySelector(".btn-toggle-visibility").onclick = async () => {
+                const newHidden = !isHidden;
+                if (this.isCloudMode) {
+                    try {
+                        const updatedBk = { ...bk, is_hidden: newHidden };
+                        await HatanSupabase.saveBooklet(updatedBk);
+                        this.booklets = await HatanSupabase.fetchBooklets();
+                        this.renderAdminBooklets();
+                        alert(newHidden ? "החוברת הוסתרה מהתלמידים בהצלחה!" : "החוברת מוצגת כעת לתלמידים בהצלחה!");
+                    } catch (e) {
+                        console.error(e);
+                        alert("שגיאה בעדכון מצב תצוגה בענן: " + e.message);
+                    }
+                } else {
+                    if (isCustom) {
+                        const idx = this.customBooklets.findIndex(c => c.id === bk.id);
+                        if (idx > -1) {
+                            this.customBooklets[idx].is_hidden = newHidden;
+                            this.saveCustomBooklets();
+                        }
+                    } else {
+                        if (typeof this.bookletOverrides[bk.id] === 'string') {
+                            this.bookletOverrides[bk.id] = {
+                                description: this.bookletOverrides[bk.id],
+                                is_hidden: newHidden
+                            };
+                        } else {
+                            this.bookletOverrides[bk.id] = {
+                                ...this.bookletOverrides[bk.id],
+                                is_hidden: newHidden
+                            };
+                        }
+                        this.saveBookletOverrides();
+                    }
+                    this.renderAdminBooklets();
+                    alert(newHidden ? "החוברת הוסתרה בהצלחה!" : "החוברת מוצגת כעת בהצלחה!");
+                }
+            };
 
             row.querySelector(".btn-save-desc").onclick = async () => {
                 const newDesc = row.querySelector(".txt-edit-desc").value.trim();
@@ -1187,7 +1253,17 @@ class HatanApp {
                             this.saveCustomBooklets();
                         }
                     } else {
-                        this.bookletOverrides[bk.id] = newDesc;
+                        if (typeof this.bookletOverrides[bk.id] === 'string') {
+                            this.bookletOverrides[bk.id] = {
+                                description: newDesc,
+                                is_hidden: false
+                            };
+                        } else {
+                            this.bookletOverrides[bk.id] = {
+                                ...this.bookletOverrides[bk.id],
+                                description: newDesc
+                            };
+                        }
                         this.saveBookletOverrides();
                     }
                     alert("תיאור החוברת עודכן ונשמר בהצלחה!");
