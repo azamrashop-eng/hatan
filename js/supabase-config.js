@@ -66,9 +66,13 @@ CREATE POLICY "Allow auth write of recorded_lessons" ON recorded_lessons FOR ALL
 
 let supabaseClient = null;
 
-if (SUPABASE_URL !== "YOUR_SUPABASE_PROJECT_URL" && SUPABASE_ANON_KEY !== "YOUR_SUPABASE_ANON_KEY") {
-    const { createClient } = window.supabase;
-    supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+if (window.supabase && SUPABASE_URL !== "YOUR_SUPABASE_PROJECT_URL" && SUPABASE_ANON_KEY !== "YOUR_SUPABASE_ANON_KEY") {
+    try {
+        const { createClient } = window.supabase;
+        supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    } catch (e) {
+        console.error("Failed to initialize Supabase client:", e);
+    }
 }
 
 const HatanSupabase = {
