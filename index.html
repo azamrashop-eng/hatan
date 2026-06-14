@@ -795,6 +795,22 @@
                             <!-- Dynamically loaded list of recorded lessons -->
                         </div>
                     </div>
+
+                    <!-- Global AI Settings (Admin only) -->
+                    <div class="card">
+                        <h2><i class="fas fa-robot" style="color: var(--primary);"></i> הגדרות בינה מלאכותית (AI) גלובליות לאתר</h2>
+                        <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1.5rem;">כאן תוכל להגדיר מפתח Gemini API גלובלי. מפתח זה יאפשר לכל התלמידים והחתנים באתר להשתמש בעוזר ה-AI המלא (Gemini) ללא צורך בהזנת מפתח משלהם.</p>
+                        
+                        <div class="form-group" style="max-width: 500px;">
+                            <label for="admin-global-gemini-key">מפתח Google Gemini API גלובלי:</label>
+                            <input type="password" id="admin-global-gemini-key" class="form-input" placeholder="הזן מפתח API גלובלי (AIzaSy...)" style="font-family: monospace;">
+                        </div>
+                        
+                        <div style="display: flex; align-items: center; gap: 15px; margin-top: 1rem;">
+                            <button class="btn" id="btn-save-global-gemini-key"><i class="fas fa-save"></i> שמור מפתח גלובלי</button>
+                            <span id="admin-global-gemini-key-status" style="color: var(--success); font-weight: 700; display: none;"><i class="fas fa-check"></i> נשמר בהצלחה!</span>
+                        </div>
+                    </div>
                 </div>
             </section>
 

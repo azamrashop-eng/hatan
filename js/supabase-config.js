@@ -61,6 +61,18 @@ CREATE POLICY "Allow auth all of feedback" ON booklet_feedback FOR ALL TO authen
 CREATE POLICY "Allow public read of recorded_lessons" ON recorded_lessons FOR SELECT USING (true);
 CREATE POLICY "Allow auth write of recorded_lessons" ON recorded_lessons FOR ALL TO authenticated USING (true);
 
+-- 5. יצירת טבלת הגדרות אתר
+CREATE TABLE site_settings (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+ALTER TABLE site_settings ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Allow public read of site_settings" ON site_settings FOR SELECT USING (true);
+CREATE POLICY "Allow auth write of site_settings" ON site_settings FOR ALL TO authenticated USING (true);
+
 -- הערה: יש ליצור גם Bucket בשם "booklets" במדור Storage ב-Supabase ולהגדיר אותו כ-Public.
 */
 
@@ -287,6 +299,40 @@ const HatanSupabase = {
             .eq('id', id);
         
         if (error) throw error;
+    },
+
+    // --- Site Settings ---
+    async fetchSiteSetting(key) {
+        if (!this.isConfigured()) return null;
+        try {
+            const { data, error } = await supabaseClient
+                .from('site_settings')
+                .select('value')
+                .eq('key', key)
+                .single();
+            
+            if (error) {
+                if (error.code === 'PGRST116') { // Row not found
+                    return null;
+                }
+                throw error;
+            }
+            return data ? data.value : null;
+        } catch (e) {
+            console.error("Error fetching site setting:", e);
+            return null;
+        }
+    },
+
+    async saveSiteSetting(key, value) {
+        if (!this.isConfigured()) throw new Error("Supabase is not configured.");
+        const { data, error } = await supabaseClient
+            .from('site_settings')
+            .upsert({ key, value, updated_at: new Date().toISOString() })
+            .select();
+        
+        if (error) throw error;
+        return data[0];
     }
 };
 

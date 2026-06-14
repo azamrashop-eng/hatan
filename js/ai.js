@@ -214,15 +214,21 @@ class HatanAi {
         return bestMatch;
     }
 
+    getEffectiveApiKey() {
+        return this.apiKey || window.globalGeminiApiKey || "";
+    }
+
     // Main query interface - routes to local matching or cloud Gemini API
     async ask(userQuestion) {
         // Record in history
         this.chatHistory.push({ role: 'user', text: userQuestion });
 
+        const activeKey = this.getEffectiveApiKey();
+
         // If API key is configured, perform remote query
-        if (this.apiKey) {
+        if (activeKey) {
             try {
-                return await this.askGemini(userQuestion);
+                return await this.askGemini(userQuestion, activeKey);
             } catch (e) {
                 console.error("Gemini API failed, falling back to local database", e);
                 return this.generateLocalResponse(userQuestion, true);
@@ -259,7 +265,7 @@ class HatanAi {
     }
 
     // Fetch call to Gemini API using Google Generative Language endpoints
-    async askGemini(query) {
+    async askGemini(query, apiKey) {
         const systemPrompt = this.buildSystemContext();
         
         // Build recent history for context (last 6 messages)
@@ -268,7 +274,7 @@ class HatanAi {
             parts: [{ text: msg.text }]
         }));
 
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${this.apiKey}`;
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
         
         const response = await fetch(url, {
             method: 'POST',

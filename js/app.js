@@ -460,6 +460,24 @@ class HatanApp {
             apiKeyInput.value = this.ai.getApiKey();
         }
 
+        // Update welcome message if API Key is active
+        const effectiveKey = this.ai.getEffectiveApiKey();
+        if (effectiveKey) {
+            const welcomeMsg = chatBox?.querySelector(".chat-message.bot");
+            if (welcomeMsg) {
+                welcomeMsg.innerHTML = `
+                    שלום חתן יקר! אני עוזר ה-AI האישי שלך לנושאי זוגיות, שלום בית, אינטימיות והלכות טהרה.
+                    <br><br>
+                    <span style="color: var(--success, #2e7d32); font-weight: 700;">
+                        <i class="fas fa-check-circle"></i> חיבור ה-AI לענן פעיל!
+                    </span> 
+                    אני משיב לך באמצעות בינה מלאכותית מתקדמת (Gemini) תוך התבססות על חומרי ההדרכה, השיעורים והחוברות באתר.
+                    <br><br>
+                    במה אוכל לסייע לך היום?
+                `;
+            }
+        }
+
         // Toggle Settings
         btnSettings?.addEventListener("click", () => {
             if (settingsBox) {
@@ -623,6 +641,16 @@ class HatanApp {
                 }
             } else {
                 this.recordedLessons = cloudLessons;
+            }
+
+            // Fetch global Gemini API key
+            try {
+                const globalApiKey = await HatanSupabase.fetchSiteSetting("gemini_api_key");
+                if (globalApiKey) {
+                    window.globalGeminiApiKey = globalApiKey;
+                }
+            } catch (err) {
+                console.error("Failed to fetch global API key:", err);
             }
         } catch (e) {
             console.error("Error initializing Supabase cloud data:", e);
@@ -901,6 +929,7 @@ class HatanApp {
                     this.renderAdminRecordedLessons();
                     this.bindAdminMediaForm();
                     this.renderAdminFeedbackList();
+                    this.bindAdminGlobalSettings();
                 } else {
                     if (sbLockedView) sbLockedView.style.display = "block";
                     if (unlockedView) unlockedView.style.display = "none";
@@ -1810,6 +1839,79 @@ class HatanApp {
 
             container.appendChild(row);
         });
+    }
+
+    async bindAdminGlobalSettings() {
+        const keyInput = document.getElementById("admin-global-gemini-key");
+        const btnSave = document.getElementById("btn-save-global-gemini-key");
+        const statusSpan = document.getElementById("admin-global-gemini-key-status");
+
+        if (!keyInput) return;
+
+        // Load existing global key
+        if (this.isCloudMode) {
+            try {
+                const currentGlobalKey = await HatanSupabase.fetchSiteSetting("gemini_api_key");
+                if (currentGlobalKey) {
+                    keyInput.value = currentGlobalKey;
+                }
+            } catch (e) {
+                console.error("Error loading global API key:", e);
+            }
+        }
+
+        if (btnSave) {
+            btnSave.onclick = async () => {
+                const keyVal = keyInput.value.trim();
+                if (this.isCloudMode) {
+                    try {
+                        btnSave.disabled = true;
+                        btnSave.innerHTML = '<i class="fas fa-spinner fa-spin"></i> שומר...';
+                        
+                        await HatanSupabase.saveSiteSetting("gemini_api_key", keyVal);
+                        window.globalGeminiApiKey = keyVal;
+                        
+                        // Update UI AI welcome message if active now
+                        const welcomeMsg = document.getElementById("ai-chat-box")?.querySelector(".chat-message.bot");
+                        if (welcomeMsg) {
+                            if (keyVal) {
+                                welcomeMsg.innerHTML = `
+                                    שלום חתן יקר! אני עוזר ה-AI האישי שלך לנושאי זוגיות, שלום בית, אינטימיות והלכות טהרה.
+                                    <br><br>
+                                    <span style="color: var(--success, #2e7d32); font-weight: 700;">
+                                        <i class="fas fa-check-circle"></i> חיבור ה-AI לענן פעיל!
+                                    </span> 
+                                    אני משיב לך באמצעות בינה מלאכותית מתקדמת (Gemini) תוך התבססות על חומרי ההדרכה, השיעורים והחוברות באתר.
+                                    <br><br>
+                                    במה אוכל לסייע לך היום?
+                                `;
+                            } else {
+                                welcomeMsg.innerHTML = `
+                                    שלום חתן יקר! אני עוזר ה-AI האישי שלך לנושאי זוגיות, שלום בית, אינטימיות והלכות טהרה.
+                                    <br><br>
+                                    כל שאלה שאתה מקליד כאן נשמרת באופן דיסקרטי על המחשב שלך בלבד. במצב ברירת המחדל אני משיב מתוך **שיעורי האתר והחוברות שהעלית**.
+                                    <br><br>
+                                    במה אוכל לסייע לך היום?
+                                `;
+                            }
+                        }
+
+                        if (statusSpan) {
+                            statusSpan.style.display = "inline";
+                            setTimeout(() => statusSpan.style.display = "none", 3000);
+                        }
+                    } catch (e) {
+                        console.error(e);
+                        alert("שגיאה בשמירת מפתח API בענן: " + e.message);
+                    } finally {
+                        btnSave.disabled = false;
+                        btnSave.innerHTML = '<i class="fas fa-save"></i> שמור מפתח גלובלי';
+                    }
+                } else {
+                    alert("שמירת הגדרות גלובליות זמינה במצב ענן בלבד.");
+                }
+            };
+        }
     }
 }
 
