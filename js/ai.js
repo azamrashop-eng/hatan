@@ -231,7 +231,7 @@ class HatanAi {
                 return await this.askGemini(userQuestion, activeKey);
             } catch (e) {
                 console.error("Gemini API failed, falling back to local database", e);
-                return this.generateLocalResponse(userQuestion, true);
+                return this.generateLocalResponse(userQuestion, e.message || String(e));
             }
         }
 
@@ -240,11 +240,14 @@ class HatanAi {
     }
 
     // Handles local matching and constructs a nice response
-    generateLocalResponse(query, apiFailed = false) {
+    generateLocalResponse(query, apiError = false) {
         const match = this.searchLocalKnowledge(query);
         let prefix = "";
-        if (apiFailed) {
-            prefix = `<div style="font-size: 0.8rem; color: var(--error); margin-bottom: 8px; font-weight: 700;"><i class="fas fa-exclamation-circle"></i> שגיאה בחיבור לענן ה-AI. מעבר אוטומטי למצב מקומי מאובטח:</div>`;
+        if (apiError) {
+            prefix = `<div style="font-size: 0.8rem; color: var(--error); margin-bottom: 12px; font-weight: 700; border: 1px solid rgba(198, 40, 40, 0.2); background: rgba(198, 40, 40, 0.05); padding: 8px 12px; border-radius: 6px; line-height: 1.4;">
+                <i class="fas fa-exclamation-circle"></i> שגיאה בחיבור לענן ה-AI: <span style="font-family: monospace; color: #b71c1c;">${apiError}</span><br>
+                מעבר אוטומטי למאגר מקומי מאובטח:
+            </div>`;
         }
 
         if (match) {
@@ -294,7 +297,14 @@ class HatanAi {
         });
 
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            let errMsg = `HTTP error! status: ${response.status}`;
+            try {
+                const errJson = await response.json();
+                if (errJson.error && errJson.error.message) {
+                    errMsg = errJson.error.message;
+                }
+            } catch (pErr) {}
+            throw new Error(errMsg);
         }
 
         const data = await response.json();
